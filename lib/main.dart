@@ -23,6 +23,36 @@ class InformationBar extends StatelessWidget {
   const InformationBar({super.key,});
 
   @override Widget build(BuildContext context) {
+    final Widget nameWidget = RichText(
+      text: TextSpan(
+        text: "Mr. ",
+        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 24, color: Colors.white),
+        children: [
+          TextSpan(text: "Aidan Ocmer", style: TextStyle(fontWeight: FontWeight.bold))
+        ]
+      )
+    );
+
+    final Widget subjectWidget = RichText(
+      text: TextSpan(
+        text: "Mathematics Teacher",
+        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
+      )
+    );
+    
+    final Widget availabilityWidget = RichText(
+      text: TextSpan(
+        text: "Shown as ",
+        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
+        children: [
+          TextSpan(
+            text: "Available",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )
+        ]
+      )
+    );
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Row(
@@ -38,7 +68,7 @@ class InformationBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     color: Colors.white,
                   ),
-                  child: FlutterLogo(size: 96)
+                  child: FlutterLogo(size: 96) // Placeholder
                 ),
               )
             ),
@@ -47,35 +77,8 @@ class InformationBar extends StatelessWidget {
             spacing: 8,
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              RichText(
-                text: TextSpan(
-                  text: "Mr. ",
-                  style: TextStyle(fontWeight: FontWeight.normal, fontSize: 24, color: Colors.white),
-                  children: [
-                    TextSpan(text: "Aidan Ocmer", style: TextStyle(fontWeight: FontWeight.bold))
-                  ]
-                )
-              ),
-              RichText(
-                text: TextSpan(
-                  text: "Mathematics Teacher",
-                  style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
-                )
-              ),
-              RichText(
-                text: TextSpan(
-                  text: "Shown as ",
-                  style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
-                  children: [
-                    TextSpan(
-                      text: "Available",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ]
-                )
-              )
-            ],
+
+            children: [ nameWidget, subjectWidget, availabilityWidget ],
           ),
         ],
       )
