@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:tns_mobile_app/infobar.dart';
-import 'package:tns_mobile_app/scheduleitem.dart';
 
 void main() {
   runApp(const TNSMobileApp());
 }
-
 
 class TNSMobileApp extends StatelessWidget {
   const TNSMobileApp({super.key});
@@ -17,21 +16,21 @@ class TNSMobileApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const TNSDefaultPage(),
+      home: const TNSRootPage(),
     );
   }
 }
 
-
-class TNSDefaultPage extends StatefulWidget {
-  const TNSDefaultPage({super.key, });
+class TNSRootPage extends StatefulWidget {
+  const TNSRootPage({super.key});
 
   @override
-  State<TNSDefaultPage> createState() => _TNSDefaultPageState();
+  State<TNSRootPage> createState() => _TNSRootPageState();
 }
 
+class _TNSRootPageState extends State<TNSRootPage> {
+  int _selectedPageIndex = 0;
 
-class _TNSDefaultPageState extends State<TNSDefaultPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,33 +38,40 @@ class _TNSDefaultPageState extends State<TNSDefaultPage> {
         backgroundColor: Color.fromRGBO(0, 32, 255, 255),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(128), 
-          child: InformationBar()
-        )
+          preferredSize: Size.fromHeight(144),
+          child: InformationBar(),
+        ),
       ),
-
-      body: Container(
-        margin: EdgeInsets.all(16),
-        child: Center (
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text("My Schedule", textScaler: TextScaler.linear(1.61),),
-              ListView(
-                shrinkWrap: true,
-                children: [
-                  SizedBox(width: double.infinity, child: ScheduleItem(),),
-                  ScheduleItem(),
-                  ScheduleItem(),
-                  ScheduleItem(),
-                  ScheduleItem(),
-                ],
-              )
-            ]
-          )
-        )
+      body: Container(),
+      bottomNavigationBar: SalomonBottomBar(
+        margin: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        
+        currentIndex: _selectedPageIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedPageIndex = index;
+          });
+        },
+        items: _destinations,
       ),
     );
   }
 }
+
+final _destinations = [
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.home_outlined),
+    title: const Text("Home"),
+    selectedColor: Colors.purple
+  ),
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.edit_calendar_outlined),
+    title: const Text("Schedule"),
+    selectedColor: Colors.orange
+  ),
+  SalomonBottomBarItem(
+    icon: const Icon(Icons.person_outline),
+    title: const Text("Profile"),
+    selectedColor: Colors.teal
+  ),
+];

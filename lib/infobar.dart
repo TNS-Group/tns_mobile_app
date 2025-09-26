@@ -50,7 +50,7 @@ class InformationBarState extends State<InformationBar> {
       )
     );
 
-    final Widget profileIcon = FlutterLogo(size: 96); // Placeholder
+    final FlutterLogo profileIcon = FlutterLogo(size: 128); // Placeholder
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 32, vertical: 32),
@@ -61,7 +61,7 @@ class InformationBarState extends State<InformationBar> {
             child: Container(
               alignment: Alignment.centerLeft,
               child: SizedBox(
-                width: 96, height: 96,
+                width: profileIcon.size, height: profileIcon.size,
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),

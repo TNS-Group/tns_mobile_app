@@ -15,27 +15,30 @@ class ScheduleItem extends StatelessWidget {
 
   @override Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(8),
-      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-      decoration: BoxDecoration(
-        color: Color.fromARGB(16, 128, 128, 128),
-        borderRadius: BorderRadius.all(Radius.circular(8))
-      ),
+      margin: EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        spacing: 16,
         children: [
           Flexible(
-            flex: 1,
+            flex: 4,
             child: Container(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.centerRight,
               child: Text("${formatTimeOfDay(start)} - ${formatTimeOfDay(end)}")
             )
           ),
-
           Flexible(
-            flex: 1,
-            child: Container(
-              alignment: Alignment.centerRight,
-              child:Text(title ?? "untitled", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),)
+            flex: 11,
+            child: SizedBox(
+                height: 64,
+              child: Container(
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16), 
+                  color: Color.fromARGB(32, 128, 128, 128)
+                ),
+                child:Text(title ?? "untitled", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),),
+              )
             )
           ),
         ],
@@ -47,6 +50,6 @@ class ScheduleItem extends StatelessWidget {
 String formatTimeOfDay(TimeOfDay tod) {
   final hour = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
   final minute = tod.minute.toString().padLeft(2, '0');
-  final period = tod.period == DayPeriod.am ? "AM" : "PM";
-  return "$hour:$minute$period";
+  // final period = tod.period == DayPeriod.am ? "AM" : "PM";
+  return "$hour:$minute";
 }
