@@ -2,29 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:tns_mobile_app/availability.dart';
 
 
-class InformationBar extends StatefulWidget {
-  const InformationBar({super.key,});
+class InformationBar extends StatelessWidget {
+  final String name;
+  final String subject;
+  final String? prefix;
+  final String? postfix;
 
-  @override
-  State<InformationBar> createState() => InformationBarState();
-}
+  final Availability availability;
 
-
-class InformationBarState extends State<InformationBar> {
-  String name = "Juan Dela Cruz";
-  String subject = "N/A";
-  String? prefix;
-  String? postfix;
-
-  Availability availability = Availability.absent;
+  const InformationBar({super.key, this.name = "Juan Dela Cruz", this.subject = "N/A", this.prefix, this.postfix, this.availability = Availability.absent});
 
   @override Widget build(BuildContext context) {
     final Widget nameWidget = RichText(
       text: TextSpan(
         text: (prefix == null) ? "" : "$prefix ",
-        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 24, color: Colors.white),
+        style: TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 24, 
+          color: Theme.of(context).colorScheme.onPrimary
+        ),
         children: [
-          TextSpan(text: name, style: TextStyle(fontWeight: FontWeight.bold)),
+          TextSpan(
+            text: name, 
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: Theme.of(context).appBarTheme.titleTextStyle?.fontFamily,
+            )
+          ),
           if ( postfix != null ) TextSpan(text: ", $postfix")
         ]
       )
@@ -33,14 +37,23 @@ class InformationBarState extends State<InformationBar> {
     final Widget subjectWidget = RichText(
       text: TextSpan(
         text: "$subject Teacher",
-        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
+        style: TextStyle(
+          fontFamily: Theme.of(context).appBarTheme.titleTextStyle?.fontFamily,
+          fontWeight: FontWeight.normal, 
+          fontSize: 12, 
+          color: Theme.of(context).colorScheme.onPrimary
+        ),
       )
     );
     
     final Widget availabilityWidget = RichText(
       text: TextSpan(
         text: "Shown as ",
-        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: Colors.white),
+        style: TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 12, 
+          color: Theme.of(context).colorScheme.onPrimary
+        ),
         children: [
           TextSpan(
             text: availability.label,
