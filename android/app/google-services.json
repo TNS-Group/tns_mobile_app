@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "146195934050",
+    "project_id": "tns-notif",
+    "storage_bucket": "tns-notif.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146195934050:android:e63e5e16d8eb9300bd1a3b",
+        "android_client_info": {
+          "package_name": "com.tnsgroup.tns_mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGT9GNKDXVaSAadJkzlssX2q_bOXm0sCk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

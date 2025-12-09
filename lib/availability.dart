@@ -1,8 +1,17 @@
 enum Availability {
-  available,
-  doNotDisturb,
-  inClass,
-  absent
+  available(0),
+  doNotDisturb(1),
+  inClass(2),
+  absent(3);
+
+  final int code;
+  const Availability(this.code);
+}
+Availability availabilityFromCode(int code) {
+  return Availability.values.firstWhere(
+    (status) => status.code == code,
+    orElse: () => Availability.absent, // default if not found
+  );
 }
 
 extension AvailabilityExtension on Availability {
@@ -15,7 +24,7 @@ extension AvailabilityExtension on Availability {
       case Availability.inClass:
         return 'In Class';
       case Availability.absent:
-        return 'Absent';
+        return 'Not Available';
     }
   }
 
@@ -28,7 +37,7 @@ extension AvailabilityExtension on Availability {
       case Availability.inClass:
         return 'is in Class';
       case Availability.absent:
-        return 'is Absent';
+        return 'is Not Available';
     }
   }
 }

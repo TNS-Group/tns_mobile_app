@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tns_mobile_app/availability.dart';
 
-
 class InformationBar extends StatelessWidget {
   final String name;
   final String subject;
@@ -15,7 +14,7 @@ class InformationBar extends StatelessWidget {
   @override Widget build(BuildContext context) {
     final Widget nameWidget = RichText(
       text: TextSpan(
-        text: (prefix == null) ? "" : "$prefix ",
+        text: prefix ?? '',
         style: TextStyle(
           fontWeight: FontWeight.normal,
           fontSize: 24, 
@@ -48,7 +47,7 @@ class InformationBar extends StatelessWidget {
     
     final Widget availabilityWidget = RichText(
       text: TextSpan(
-        text: "Shown as ",
+        text: "Seen as ",
         style: TextStyle(
           fontWeight: FontWeight.normal,
           fontSize: 12, 
@@ -63,34 +62,12 @@ class InformationBar extends StatelessWidget {
       )
     );
 
-    final FlutterLogo profileIcon = FlutterLogo(size: 128); // Placeholder
-
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 32, vertical: 32),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              alignment: Alignment.centerLeft,
-              child: SizedBox(
-                width: profileIcon.size, height: profileIcon.size,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                  ),
-                  child: profileIcon
-                ),
-              )
-            ),
-          ),
-          Column(
-            spacing: 8,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [ nameWidget, subjectWidget, availabilityWidget ],
-          ),
-        ],
+      child: Column(
+        spacing: 8,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [ nameWidget, if (subject.isEmpty) subjectWidget, availabilityWidget ],
       )
     );
   }
