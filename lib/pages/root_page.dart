@@ -888,33 +888,34 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     // Schedule Page
-    final schedPage = Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        spacing: 16,
-        children: [
-          Row(
-            children: [ for (final w in WeekDay.values)
-              Expanded(
-                child: w == selectedDay ? FilledButton(
-                  onPressed: (){
-                    setState((){
-                      selectedDay = w;
-                    });
-                  }, 
-                  child: Text(w.label.substring(0, 3))
-                ) : TextButton(
-                  onPressed: (){
-                    setState((){
-                      selectedDay = w;
-                    });
-                  }, 
-                  child: Text(w.label.substring(0, 3))
-                ),
-              )
-            ],
-          ),
-          Expanded(
+    final schedPage = Column(
+      spacing: 16,
+      children: [
+        Row(
+          children: [ for (final w in WeekDay.values)
+            Expanded(
+              child: w == selectedDay ? FilledButton(
+                onPressed: (){
+                  setState((){
+                    selectedDay = w;
+                  });
+                }, 
+                child: Text(w.label.substring(0, 3))
+              ) : TextButton(
+                onPressed: (){
+                  setState((){
+                    selectedDay = w;
+                  });
+                }, 
+                child: Text(w.label.substring(0, 3))
+              ),
+            )
+          ],
+        ),
+
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Expanded(
             child: Stack(
               children: [
                 ClipRRect(
@@ -980,8 +981,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               ],
             )
           ),
-        ],
-      )
+        ),
+      ],
     );
 
     // Settings Page
