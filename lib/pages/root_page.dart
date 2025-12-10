@@ -866,7 +866,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       ),
     );
 
-    final homePage = Container(
+    final homePage = SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column (
         spacing: 8,
@@ -888,7 +888,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     // Schedule Page
-    final schedPage = Container(
+    final schedPage = SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
         spacing: 16,
@@ -985,7 +985,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     // Settings Page
-    final profilePage = Container(
+    final profilePage = SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
         spacing: 16,
