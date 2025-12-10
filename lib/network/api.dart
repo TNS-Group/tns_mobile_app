@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:tns_mobile_app/availability.dart';
 import 'package:tns_mobile_app/models/schedule.dart';
 import 'package:tns_mobile_app/models/school_class.dart';
 import 'package:tns_mobile_app/models/sse_connection.dart';
@@ -380,12 +381,14 @@ Future<Map<String, dynamic>?> updateProfile({
   return data; // Returns {'id': id, 'token': newTokenOrNull}
 }
 
-Future<Teacher?> login(String email, String password, String firebaseToken) async {
+Future<Teacher?> login(String email, String password, [String? firebaseToken]) async {
   Map<String, dynamic>? data = await postParse(
     "/api/login",
     params: {
       "email": email,
       "password": password,
+      
+      if (firebaseToken != null)
       "firebase_token": firebaseToken
     },
   );
@@ -418,12 +421,43 @@ Future<bool> respond(String message, String tabletSession, String token) async {
   return (data != null);
 }
 
+Future<void> forceAvailability(Availability availability, TimeOfDay until, String token) async {
+  final time = '${until.hour.toString().padLeft(2, '0')}:${until.minute.toString().padLeft(2, '0')}:00';
+  await postParse(
+    "/api/forceAvailability",
+    token: token,
+    params: {
+      "until": time
+    }
+  );
+}
+
+Future<void> setTeacherPrefs(String token, {bool dndVacant=true}) async {
+  await optionsParse(
+    "/api/setPreferences", 
+    token: token,
+    data: {
+      "dnd_vacant": dndVacant
+    },
+  );
+}
+
+Future<Map<String, dynamic>?> getTeacherPrefs(String token) async {
+  return await getParse(
+    "/api/getPreferences", 
+    headers: {
+      "Authorization": token
+    },
+  );
+}
+
 Stream<Map<String, dynamic>> listenToTeacherEvents(String token) {
   return streamEvents(
     "/api/eventsTeacher",
     param: {"token": token},
   ).map((sse) => json.decode(sse.data) as Map<String, dynamic>);
 }
+
 
 // Classes
 Future<List<SchoolClass>> getClassesList() async {

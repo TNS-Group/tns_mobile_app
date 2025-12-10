@@ -28,7 +28,7 @@ class InformationBar extends StatelessWidget {
               fontFamily: Theme.of(context).appBarTheme.titleTextStyle?.fontFamily,
             )
           ),
-          if ( postfix != null ) TextSpan(text: ", $postfix")
+          if ( postfix != null && postfix!.isNotEmpty ) TextSpan(text: ", $postfix")
         ]
       )
     );
@@ -67,7 +67,7 @@ class InformationBar extends StatelessWidget {
       child: Column(
         spacing: 8,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [ nameWidget, if (subject.isEmpty) subjectWidget, availabilityWidget ],
+        children: [ nameWidget, if (subject.isNotEmpty && subject != 'null') subjectWidget, availabilityWidget ],
       )
     );
   }

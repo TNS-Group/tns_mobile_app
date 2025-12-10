@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tns_mobile_app/availability.dart';
 import 'package:tns_mobile_app/models/teacher.dart';
 import 'package:tns_mobile_app/network/api.dart';
@@ -26,6 +27,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
   late PageController _pageViewController;
   late TabController _tabController;
   final GlobalKey _bottomBarBuilderKey = GlobalKey();
+
+  bool _dndVacant = true;
 
   // Input Controllers
   late TextEditingController prefixTextController;
@@ -66,6 +69,120 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     return file;
+  }
+
+  void showAvailabilityUntilPopup(BuildContext context) {
+    TimeOfDay? untilTime;
+    Availability? selectedAvailability;
+    String? errorMessage;
+
+    Future<void> pickTime() async {
+      final now = TimeOfDay.now();
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: untilTime ?? now,
+      );
+
+      if (picked != null) {
+      untilTime = picked;
+    }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text("Set Availability"),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                // Assuming this Column extension for spacing exists in your project.
+                // If not, replace with default Column and add SizedBox between children.
+                // For example: replace Column(spacing: 8, ...) with Column(..., children: [..., const SizedBox(height: 8), ...])
+                // For simplicity, I'll use a standard Column with SizedBoxes.
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Display error message at the top if there is one
+                  if (errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Text(
+                      errorMessage!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ),
+
+                  // ---- AVAILABILITY DROPDOWN ----
+                  DropdownButtonFormField<Availability>(
+                  decoration: const InputDecoration(
+                    labelText: "Availability Status",
+                    border: OutlineInputBorder(),
+                  ),
+                  value: selectedAvailability,
+                  items: Availability.values
+                  .map((a) => DropdownMenuItem(
+                    value: a,
+                    child: Text(a.label)
+                  ))
+                  .toList(),
+                  onChanged: (v) => setState(() {
+                    selectedAvailability = v;
+                    errorMessage = null; // Clear error on change
+                  }),
+                ),
+
+                  const SizedBox(height: 16),
+
+                  // ---- UNTIL TIME PICKER ----
+                  InkWell(
+                    onTap: () async {
+                      await pickTime();
+                      setState(() {
+                        errorMessage = null; // Clear error on change
+                      });
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: "Until Time",
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        untilTime != null
+                        ? untilTime!.format(context)
+                        : "Select time",
+                        style: untilTime == null ? const TextStyle(color: Colors.grey) : null,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            FilledButton(
+              onPressed: () {
+                // VALIDATION
+                if (selectedAvailability == null || untilTime == null) {
+                  setState(() {}); // <-- not needed for AlertDialog, but safe
+                  errorMessage = "Please fill in all fields";
+                  (context as Element).markNeedsBuild();
+                  return;
+                }
+
+                forceAvailability(selectedAvailability!, untilTime!, self.token!);
+                Navigator.pop(context);
+              },
+              child: const Text("Set"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void showPasswordChangePopup(BuildContext context) {
@@ -610,6 +727,19 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     _teacherStream.listen((data) {
       _showEventDialog(data["tablet_session"]);
     });
+
+    getTeacherPrefs(self.token!).then((d){
+      _dndVacant = d!["dnd_vacant"];
+    });
+    // SharedPreferences.getInstance().then((v){
+    //   prefs = v;
+    //
+    //   if (!prefs.containsKey("dndVacant")) {
+    //     prefs.setBool("dndVacant", true);
+    //   } else {
+    //     _dndVacant = prefs.getBool("dndVacant")!;
+    //   }
+    // });
   }
 
   @override void dispose() {
@@ -662,6 +792,16 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         ),
         SizedBox(
           width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => showAvailabilityUntilPopup(context),
+            child: Padding( 
+              padding: EdgeInsets.all(16),
+              child: const Text("Set Availability Until")
+            )
+          ),
+        ),
+        SizedBox(
+          width: double.infinity,
           child: FilledButton(
             onPressed: _availability != Availability.absent ? null : (){
               setState(() {
@@ -677,6 +817,20 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       ],
     );
 
+    final lsVwChildren = [ for (Schedule i in sortedSchedules) 
+      if (TimeOfDay.now().isBefore(i.timeOut))
+      Padding(
+        padding: EdgeInsetsGeometry.only(bottom: 8), 
+        child: ScheduleItem(
+          start: i.timeIn,
+          end: i.timeOut,
+          className: classes[i.classId]?.name ?? '',
+          subject: i.subject,
+          weekday: i.weekday,
+        )
+      ) 
+    ];
+
     final classesList = ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
@@ -688,18 +842,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             // Scrollable List
             ListView(
               shrinkWrap: true,
-              children: [ for (Schedule i in sortedSchedules) 
-                if (TimeOfDay.now().isBefore(i.timeOut))
-                Padding(
-                  padding: EdgeInsetsGeometry.only(bottom: 8), 
-                  child: ScheduleItem(
-                    start: i.timeIn,
-                    end: i.timeOut,
-                    className: classes[i.classId]?.name ?? '',
-                    subject: i.subject,
-                    weekday: i.weekday,
-                  )
-                ) ],
+              children: lsVwChildren,
             ),
 
             Positioned.fill(
@@ -726,9 +869,19 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     final homePage = Container(
       padding: EdgeInsets.all(16),
       child: Column (
-        spacing: 32,
+        spacing: 8,
         children: [
           quickSettings,
+          const SizedBox(height: 32,),
+          if (lsVwChildren.isNotEmpty) const Text(
+            'Next Classes'
+          )
+
+          else const Text(
+            "Woohoo! You have no upcoming classes", 
+            style: TextStyle(fontStyle: FontStyle.italic
+            ),
+          ),
           classesList
         ],
       )
@@ -817,7 +970,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       )
     );
 
-    // Profile Page
+    // Settings Page
     final profilePage = Container(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -969,6 +1122,20 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                         icon: Icon(Icons.subject)
                       ), 
                     ),
+                    Row(
+                      children: [
+                        Expanded(child: const Text("Turn-on DND while vacant")),
+                        Switch(
+                          onChanged: (value) {
+                            setTeacherPrefs(self.token!, dndVacant: value);
+                            setState((){
+                              _dndVacant = value;
+                            });
+                          },
+                          value: _dndVacant,
+                        ),
+                      ],
+                    )
                   ],
                 )
               ),

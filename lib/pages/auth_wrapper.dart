@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,49 +31,69 @@ class _AuthWrapperState extends State<AuthWrapper> {
           loginPageKey.currentState?.loading = true;
         });
 
-        FirebaseMessaging messaging = FirebaseMessaging.instance;
+        String? fcmToken;
 
-        // Request permission (iOS only, recommended on Android too)
-        NotificationSettings settings = await messaging.requestPermission();
-        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-          String? fcmToken = await messaging.getToken();
+        if (Platform.isAndroid || Platform.isIOS) {
+          FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-          api.login(email, password, fcmToken!).then((teacher) {
-            if (teacher == null) {
-                loginPageKey.currentState?.setState(() {
-                  loginPageKey.currentState?.loading = false;
-                  loginPageKey.currentState?.hasError = true;
-                });
-              } else {
-                prefs.setString("token", teacher.token ?? '');
-                setState(() {
-                  currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
-                });
+          // Request permission (iOS only, recommended on Android too)
+          NotificationSettings settings = await messaging.requestPermission();
+          if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+            fcmToken = await messaging.getToken();
 
-                loginPageKey.currentState?.setState(() {
-                  loginPageKey.currentState?.loading = false;
-                });
-              }
+            api.login(email, password, fcmToken!).then((teacher) {
+              if (teacher == null) {
+                  loginPageKey.currentState?.setState(() {
+                    loginPageKey.currentState?.loading = false;
+                    loginPageKey.currentState?.hasError = true;
+                  });
+                } else {
+                  prefs.setString("token", teacher.token ?? '');
+                  setState(() {
+                    currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
+                  });
 
-          });
-        } else {
-          if (!mounted) return;
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text("Notification"),
-              content: const Text(""),
-              actions: [
-                FilledButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }, 
-                  child: const Text("Ok")
-                )
-              ],
-            ),
-          );
+                  loginPageKey.currentState?.setState(() {
+                    loginPageKey.currentState?.loading = false;
+                  });
+                }
+            });
+          }
         }
+
+        api.login(email, password, fcmToken).then((teacher) {
+          if (teacher == null) {
+              loginPageKey.currentState?.setState(() {
+                loginPageKey.currentState?.loading = false;
+                loginPageKey.currentState?.hasError = true;
+              });
+            } else {
+              prefs.setString("token", teacher.token ?? '');
+              setState(() {
+                currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
+              });
+
+              loginPageKey.currentState?.setState(() {
+                loginPageKey.currentState?.loading = false;
+              });
+            }
+        });
+        // if (!mounted) return;
+        // showDialog(
+        //   context: context,
+        //   builder: (context) => AlertDialog(
+        //     title: const Text("Notification"),
+        //     content: const Text(""),
+        //     actions: [
+        //       FilledButton(
+        //         onPressed: () {
+        //           Navigator.pop(context);
+        //         }, 
+        //         child: const Text("Ok")
+        //       )
+        //     ],
+        //   ),
+        // );
       },
     );
 
