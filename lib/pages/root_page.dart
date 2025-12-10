@@ -888,7 +888,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     // Schedule Page
-    final schedPage = SingleChildScrollView(
+    final schedPage = Container(
       padding: EdgeInsets.all(16),
       child: Column(
         spacing: 16,
