@@ -888,99 +888,100 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
 
     // Schedule Page
-    final schedPage = Column(
-      spacing: 16,
-      children: [
-        Row(
-          children: [ for (final w in WeekDay.values)
-            Expanded(
-              child: w == selectedDay ? FilledButton(
-                onPressed: (){
-                  setState((){
-                    selectedDay = w;
-                  });
-                }, 
-                child: Text(w.label.substring(0, 3))
-              ) : TextButton(
-                onPressed: (){
-                  setState((){
-                    selectedDay = w;
-                  });
-                }, 
-                child: Text(w.label.substring(0, 3))
-              ),
-            )
-          ],
-        ),
-
-        Container(
-          padding: EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: (sortedSchedules.isEmpty) ? [ Center(
-                    child: const Text(
-                      "Woohoo! You have no upcoming classes", 
-                      style: TextStyle(fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  )] : [ for (Schedule i in sortedSchedules)
-                    if (i.weekday == selectedDay)
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(bottom: 8), 
-                      child: Ink(
-                        child: InkWell( 
-                          splashColor: Colors.blue,
-                          onTap: () {
-                            showScheduleEditPopup(context, i.id);
-                          },
-                          child: Stack(
-                            fit: StackFit.loose,
-                            children: [
-                              ScheduleItem(
-                                start: i.timeIn,
-                                end: i.timeOut,
-                                className: classes[i.classId]?.name ?? '',
-                                subject: i.subject,
-                                weekday: i.weekday,
-                              ),
-                              Positioned.fill(
-                                child: Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding( 
-                                    padding: EdgeInsetsGeometry.all(16),
-                                    child: Icon(
-                                      Icons.edit,
-                                    )
-                                  )
-                                )
-                              )
-                            ],
-                          )
-                        )
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              Positioned(
-                bottom: 1,
-                right: 1,
-                child: FilledButton(
-                  onPressed: () { showScheduleAddPopup(context); }, 
-                  child: const Padding(
-                    padding: EdgeInsetsGeometry.symmetric(vertical: 16, horizontal: 32),
-                    child: Text("+ Add New")
-                  )
+    final schedPage = Container(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        spacing: 16,
+        children: [
+          Row(
+            children: [ for (final w in WeekDay.values)
+              Expanded(
+                child: w == selectedDay ? FilledButton(
+                  onPressed: (){
+                    setState((){
+                      selectedDay = w;
+                    });
+                  }, 
+                  child: Text(w.label.substring(0, 3))
+                ) : TextButton(
+                  onPressed: (){
+                    setState((){
+                      selectedDay = w;
+                    });
+                  }, 
+                  child: Text(w.label.substring(0, 3))
                 ),
               )
             ],
-          )
-        ),
-      ],
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: (sortedSchedules.isEmpty) ? [ Center(
+                      child: const Text(
+                        "Woohoo! You have no upcoming classes", 
+                        style: TextStyle(fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )] : [ for (Schedule i in sortedSchedules)
+                      if (i.weekday == selectedDay)
+                      Padding(
+                        padding: EdgeInsetsGeometry.only(bottom: 8), 
+                        child: Ink(
+                          child: InkWell( 
+                            splashColor: Colors.blue,
+                            onTap: () {
+                              showScheduleEditPopup(context, i.id);
+                            },
+                            child: Stack(
+                              fit: StackFit.loose,
+                              children: [
+                                ScheduleItem(
+                                  start: i.timeIn,
+                                  end: i.timeOut,
+                                  className: classes[i.classId]?.name ?? '',
+                                  subject: i.subject,
+                                  weekday: i.weekday,
+                                ),
+                                Positioned.fill(
+                                  child: Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Padding( 
+                                      padding: EdgeInsetsGeometry.all(16),
+                                      child: Icon(
+                                        Icons.edit,
+                                      )
+                                    )
+                                  )
+                                )
+                              ],
+                            )
+                          )
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 1,
+                  right: 1,
+                  child: FilledButton(
+                    onPressed: () { showScheduleAddPopup(context); }, 
+                    child: const Padding(
+                      padding: EdgeInsetsGeometry.symmetric(vertical: 16, horizontal: 32),
+                      child: Text("+ Add New")
+                    )
+                  ),
+                )
+              ],
+            )
+          ),
+        ],
+      )
     );
 
     // Settings Page
