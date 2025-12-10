@@ -49,7 +49,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
 
   Availability _availability = Availability.absent;
 
-  WeekDay selectedDay = WeekDay.monday;
+  WeekDay selectedDay = WeekDay.fromCode(DateTime.now().weekday - 1);
 
   late Stream<Map<String, dynamic>> _teacherStream;
 
@@ -915,57 +915,71 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             ],
           ),
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: ListView(
-                shrinkWrap: true,
-                children: [ for (Schedule i in sortedSchedules)
-                  if (i.weekday == selectedDay)
-                  Padding(
-                    padding: EdgeInsetsGeometry.only(bottom: 8), 
-                    child: Ink(
-                      child: InkWell( 
-                        splashColor: Colors.blue,
-                        onTap: () {
-                          showScheduleEditPopup(context, i.id);
-                        },
-                        child: Stack(
-                          fit: StackFit.loose,
-                          children: [
-                            ScheduleItem(
-                              start: i.timeIn,
-                              end: i.timeOut,
-                              className: classes[i.classId]?.name ?? '',
-                              subject: i.subject,
-                              weekday: i.weekday,
-                            ),
-                            Positioned.fill(
-                              child: Align(
-                                alignment: Alignment.bottomRight,
-                                child: Padding( 
-                                  padding: EdgeInsetsGeometry.all(16),
-                                  child: Icon(
-                                    Icons.edit,
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: (sortedSchedules.isEmpty) ? [ Center(
+                      child: const Text(
+                        "Woohoo! You have no upcoming classes", 
+                        style: TextStyle(fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )] : [ for (Schedule i in sortedSchedules)
+                      if (i.weekday == selectedDay)
+                      Padding(
+                        padding: EdgeInsetsGeometry.only(bottom: 8), 
+                        child: Ink(
+                          child: InkWell( 
+                            splashColor: Colors.blue,
+                            onTap: () {
+                              showScheduleEditPopup(context, i.id);
+                            },
+                            child: Stack(
+                              fit: StackFit.loose,
+                              children: [
+                                ScheduleItem(
+                                  start: i.timeIn,
+                                  end: i.timeOut,
+                                  className: classes[i.classId]?.name ?? '',
+                                  subject: i.subject,
+                                  weekday: i.weekday,
+                                ),
+                                Positioned.fill(
+                                  child: Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Padding( 
+                                      padding: EdgeInsetsGeometry.all(16),
+                                      child: Icon(
+                                        Icons.edit,
+                                      )
+                                    )
                                   )
                                 )
-                              )
+                              ],
                             )
-                          ],
-                        )
+                          )
+                        ),
                       )
-                    ),
-                  )
-                ],
-              ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 1,
+                  right: 1,
+                  child: FilledButton(
+                    onPressed: () { showScheduleAddPopup(context); }, 
+                    child: const Padding(
+                      padding: EdgeInsetsGeometry.symmetric(vertical: 16, horizontal: 32),
+                      child: Text("+ Add New")
+                    )
+                  ),
+                )
+              ],
             )
           ),
-          FilledButton(
-            onPressed: () { showScheduleAddPopup(context); }, 
-            child: const Padding(
-              padding: EdgeInsetsGeometry.symmetric(vertical: 8, horizontal: 32),
-              child: Text("+ Add New")
-            )
-          )
         ],
       )
     );
