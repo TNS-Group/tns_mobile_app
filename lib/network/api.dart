@@ -388,8 +388,8 @@ Future<Teacher?> login(String email, String password, [String? firebaseToken]) a
       "email": email,
       "password": password,
       
-      if (firebaseToken != null)
-      "firebase_token": firebaseToken
+      // if (firebaseToken != null)
+      "firebase_token": firebaseToken ?? ""
     },
   );
 

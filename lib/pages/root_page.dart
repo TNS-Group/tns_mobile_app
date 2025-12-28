@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tns_mobile_app/availability.dart';
 import 'package:tns_mobile_app/models/teacher.dart';
 import 'package:tns_mobile_app/network/api.dart';
@@ -52,13 +51,6 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
   WeekDay selectedDay = WeekDay.fromCode(DateTime.now().weekday - 1);
 
   late Stream<Map<String, dynamic>> _teacherStream;
-
-  void _clearAllImageCache() {
-    setState(() {
-      imageCache.clear(); 
-      imageCache.clearLiveImages(); 
-    }); 
-  }
 
   Future<XFile?> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -119,7 +111,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                     labelText: "Availability Status",
                     border: OutlineInputBorder(),
                   ),
-                  value: selectedAvailability,
+                  initialValue: selectedAvailability,
                   items: Availability.values
                   .map((a) => DropdownMenuItem(
                     value: a,

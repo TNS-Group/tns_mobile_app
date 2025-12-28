@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:tns_mobile_app/globals.dart' as globals;
 import 'package:flutter/material.dart';
 
 class TNSLoginPage extends StatefulWidget {
