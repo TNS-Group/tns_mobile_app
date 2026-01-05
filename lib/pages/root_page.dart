@@ -46,7 +46,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
   Map<int, Schedule> schedules = {};
   Map<int, SchoolClass> classes = {};
 
-  Availability _availability = Availability.absent;
+  Availability availability = Availability.absent;
+  Availability _tempAvailabiity = Availability.absent;
 
   WeekDay selectedDay = WeekDay.fromCode(DateTime.now().weekday - 1);
 
@@ -167,6 +168,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                 }
 
                 forceAvailability(selectedAvailability!, untilTime!, self.token!);
+                setState(() {
+                  availability = selectedAvailability!;
+                });
+
                 Navigator.pop(context);
               },
               child: const Text("Set"),
@@ -239,6 +244,50 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           ],
         );
       },
+    );
+  }
+
+  void confirmationDeleteSchedule(BuildContext context, int scheduleId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: const Padding(
+            padding: EdgeInsets.only(top: 16, left: 16, right: 16),
+            child: Column(
+              spacing: 16,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Confirm Deletion", textScaler: TextScaler.linear(constants.phi),),
+                Text("Are you sure?"),
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              // style: ButtonStyle(
+              //   backgroundColor: WidgetStatePropertyAll(Colors.red)
+              // ),
+              onPressed: (){
+                Navigator.pop(context);
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: (){
+                deleteSchedule(scheduleId, self.token!);
+
+                setState(() {
+                  schedules.remove(scheduleId);
+                });
+                Navigator.pop(context);
+              }, 
+              child: const Text("Yes, Delete", style: TextStyle(color: Colors.red),)
+            )
+          ],
+        );
+      }
     );
   }
 
@@ -378,19 +427,20 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+              onPressed: (){
+                confirmationDeleteSchedule(context, index);
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.delete_outline, color: Colors.red,),
+                  const Text("Delete", style: TextStyle(color: Colors.red))
+                ],
+              )
             ),
             TextButton(
-              onPressed: (){
-                deleteSchedule(index, self.token ?? '');
-
-                setState(() {
-                  schedules.remove(index);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text("Delete")
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
             FilledButton(
               onPressed: () {
@@ -717,7 +767,13 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
 
     _teacherStream = listenToTeacherEvents(self.token!);
     _teacherStream.listen((data) {
-      _showEventDialog(data["tablet_session"]);
+      if (data["event"] == "notify") {
+        _showEventDialog(data["tablet_session"]);
+      } else if (data["event"] == "switchAvailability") {
+        setState( () {
+          availability = availabilityFromCode(data["availability"] as int);
+        });
+      }
     });
 
     getTeacherPrefs(self.token!).then((d){
@@ -773,10 +829,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               flex: 2,
               child: DropdownButtonFormField<Availability>(
                 decoration: InputDecoration(),
-                initialValue: _availability,
+                initialValue: availability,
                 items: Availability.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label))).toList(),
                 onChanged: (v) => setState(() {
-                  _availability = v ?? Availability.absent;
+                  availability = v ?? Availability.absent;
                 }),
               )
             ),
@@ -795,14 +851,14 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: _availability != Availability.absent ? null : (){
+            onPressed: availability != Availability.absent ? null : (){
               setState(() {
-                _availability = Availability.available;
+                availability = Availability.available;
               });
             }, 
             child: Padding( 
               padding: EdgeInsets.all(16),
-              child: Text(_availability != Availability.absent ? "Already Checked In" : "Check In")
+              child: Text(availability != Availability.absent ? "Already Checked In" : "Check In")
             )
           ),
         ),
@@ -923,36 +979,45 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       if (i.weekday == selectedDay)
                       Padding(
                         padding: EdgeInsetsGeometry.only(bottom: 8), 
-                        child: Ink(
-                          child: InkWell( 
-                            splashColor: Colors.blue,
-                            onTap: () {
-                              showScheduleEditPopup(context, i.id);
-                            },
-                            child: Stack(
-                              fit: StackFit.loose,
-                              children: [
-                                ScheduleItem(
-                                  start: i.timeIn,
-                                  end: i.timeOut,
-                                  className: classes[i.classId]?.name ?? '',
-                                  subject: i.subject,
-                                  weekday: i.weekday,
-                                ),
-                                Positioned.fill(
-                                  child: Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: Padding( 
-                                      padding: EdgeInsetsGeometry.all(16),
-                                      child: Icon(
-                                        Icons.edit,
-                                      )
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            fit: StackFit.loose,
+                            children: [
+                              ScheduleItem(
+                                start: i.timeIn,
+                                end: i.timeOut,
+                                className: classes[i.classId]?.name ?? '',
+                                subject: i.subject,
+                                weekday: i.weekday,
+                              ),
+                              Positioned.fill(
+                                child: Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Padding( 
+                                    padding: EdgeInsetsGeometry.all(16),
+                                    child: Icon(
+                                      Icons.edit,
                                     )
                                   )
                                 )
-                              ],
-                            )
-                          )
+                              ),
+                              Positioned.fill(
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      showScheduleEditPopup(context, i.id);
+                                    },
+                                    child: Ink(
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                ),
+                              )
+                          
+                            ],
+                          ),
                         ),
                       )
                     ],
@@ -990,95 +1055,102 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               // Preview
               Expanded(
                 flex: 1,
-                child: InkWell(
-                  onTap: () {
-                    _pickImage().then((f){
-                      if (f == null) return;
-                      uploadProfilePicture(f, self.token!).then((_){
-                        Future.delayed(Duration(milliseconds: 250)).then((_){
-                          setState(() {
-                            _cacheBusterssssssssssssss++;
-                          });
-                        });
-                      });
-                      
-                    });                    
-                  },
-
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      child: AspectRatio(
-                        aspectRatio: 2/3,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Container(
-                              color: Theme.of(context).colorScheme.surface
-                            ),
-                            Positioned.fill(
-                              child: Opacity(
-                                opacity: _availability == Availability.available ? 1 : constants.opacityUnavailable,
-                                child: Image(
-                                  image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_cacheBusterssssssssssssss'),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(Icons.broken_image, size: 64, color: Theme.of(context).colorScheme.onSurface);
-                                  },
-                                )
-                              ),
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(16),
-                              alignment: Alignment.bottomLeft,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.center,
-                                  colors: [
-                                    Theme.of(context).colorScheme.surfaceContainerHigh,
-                                    Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(0),
-                                  ]
-                                )
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    self.name, 
-                                    textScaler: TextScaler.linear(constants.phi), 
-                                    style: TextStyle(
-                                      color: _availability == Availability.available ? 
-                                      Theme.of(context).colorScheme.onSurface :
-                                      Theme.of(context).colorScheme.onSurface.withAlpha(128)
-                                    ),
-                                  ),
-                                  Text(_availability.label,
-                                    style: TextStyle(
-                                      color: _availability == Availability.available ? 
-                                      Colors.green :
-                                      Colors.red,
-                                      fontWeight: FontWeight.bold
-                                    )
-                                  ),
-                                ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: AspectRatio(
+                      aspectRatio: 2/3,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            color: Theme.of(context).colorScheme.surface
+                          ),
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: availability == Availability.available ? 1 : constants.opacityUnavailable,
+                              child: Image(
+                                image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_cacheBusterssssssssssssss'),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.broken_image, size: 64, color: Theme.of(context).colorScheme.onSurface);
+                                },
                               )
                             ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Padding(
-                                padding: EdgeInsetsGeometry.all(8),
-                                child: Icon(
-                                  Icons.edit,
-                                )
-                              ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            alignment: Alignment.bottomLeft,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.center,
+                                colors: [
+                                  Theme.of(context).colorScheme.surfaceContainerHigh,
+                                  Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(0),
+                                ]
+                              )
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  self.name, 
+                                  textScaler: TextScaler.linear(constants.phi), 
+                                  style: TextStyle(
+                                    color: availability == Availability.available ? 
+                                    Theme.of(context).colorScheme.onSurface :
+                                    Theme.of(context).colorScheme.onSurface.withAlpha(128)
+                                  ),
+                                ),
+                                Text(availability.label,
+                                  style: TextStyle(
+                                    color: availability == Availability.available ? 
+                                    Colors.green :
+                                    Colors.red,
+                                    fontWeight: FontWeight.bold
+                                  )
+                                ),
+                              ],
                             )
-                          ],
-                        ),
-                      )
+                          ),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Padding(
+                              padding: EdgeInsetsGeometry.all(8),
+                              child: Icon(
+                                Icons.edit,
+                              )
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _pickImage().then((f){
+                                    if (f == null) return;
+                                    uploadProfilePicture(f, self.token!).then((_){
+                                      Future.delayed(Duration(milliseconds: 250)).then((_){
+                                        setState(() {
+                                          _cacheBusterssssssssssssss++;
+                                        });
+                                      });
+                                    });
+
+                                  });                    
+                                },
+                                child: Ink(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     )
                   )
                 ),
@@ -1201,7 +1273,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             prefix: self.prefix,
             postfix: self.suffix,
             subject: self.subject.toString(),
-            availability: _availability,
+            availability: availability,
           ),
         ),
       ),
