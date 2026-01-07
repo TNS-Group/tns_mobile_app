@@ -833,6 +833,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                 items: Availability.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label))).toList(),
                 onChanged: (v) => setState(() {
                   availability = v ?? Availability.absent;
+                  forceAvailability(availability, null, self.token!);
                 }),
               )
             ),

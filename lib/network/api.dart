@@ -421,11 +421,11 @@ Future<bool> respond(String message, String tabletSession, String token) async {
   return (data != null);
 }
 
-Future<void> forceAvailability(Availability availability, TimeOfDay until, String token) async {
-  final time = '${until.hour.toString().padLeft(2, '0')}:${until.minute.toString().padLeft(2, '0')}:00';
+Future<void> forceAvailability(Availability availability, TimeOfDay? until, String token) async {
   final thing = {
     "availability": availability.code.toString(),
-    "until": time
+    if (until != null)
+    "until": '${until.hour.toString().padLeft(2, '0')}:${until.minute.toString().padLeft(2, '0')}:00'
   };
   await postParse(
     "/api/forceAvailability",
