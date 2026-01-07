@@ -855,6 +855,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             onPressed: availability != Availability.absent ? null : (){
               setState(() {
                 availability = Availability.available;
+                forceAvailability(availability, null, self.token!);
               });
             }, 
             child: Padding( 

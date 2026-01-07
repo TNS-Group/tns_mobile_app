@@ -1,96 +1,77 @@
 {
-  description = "Flutter development environment (Linux Desktop + Optional Android)";
+  description = "Flutter environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
       let
-        # --- CONFIGURATION ---
-        includeAndroid = true; # Set to true when you want the 8GB Android SDK
-        # ---------------------
+        enableEmulators = false;
 
         pkgs = import nixpkgs {
           inherit system;
-          config = {
-            android_sdk.accept_license = true;
-            allowUnfree = true;
-          };
+          config.allowUnfree = true;
+          android_sdk.accept_license = true;
         };
-
-        # Only define the heavy SDK if includeAndroid is true
-        androidSdk = if includeAndroid then 
-          (pkgs.androidenv.composeAndroidPackages {
-            buildToolsVersions = [ "34.0.0" ];
-            platformVersions = [ "34" "33" ];
-            abiVersions = [ "x86_64" "arm64-v8a" ];
-            includeEmulator = true;
-            includeSystemImages = true;
-          }).androidsdk
-          else null;
-
-        libraries = with pkgs; [
-          util-linux
-          libGL
-          fontconfig
-          harfbuzz
-          at-spi2-core
-          pango
-          pcre2
-          gdk-pixbuf
-          gtk3
-          glib
-          libepoxy
-          cairo
-          libsysprof-capture
-          libselinux
-          libsepol
-          libthai
-          libdatrie
-          libdeflate
-          pcre
-          xorg.libXdmcp
-          xorg.libXtst
-        ];
+        androidEnv = pkgs.androidenv.override { licenseAccepted = true; };
+        androidComposition = androidEnv.composeAndroidPackages {
+          cmdLineToolsVersion = "8.0"; # emulator related: newer versions are not only compatible with avdmanager
+          platformToolsVersion = "35.0.1";
+          buildToolsVersions = [ "30.0.3" "33.0.2" "34.0.0" ];
+          platformVersions = [ "28" "31" "32" "33" "34" ];
+          abiVersions = [ "x86_64" ]; # emulator related: on an ARM machine, replace "x86_64" with
+          # either "armeabi-v7a" or "arm64-v8a", depending on the architecture of your workstation.
+          includeNDK = false;
+          includeSystemImages = enableEmulators; # emulator related: system images are needed for the emulator.
+          systemImageTypes = [ "google_apis" "google_apis_playstore" ];
+          includeEmulator = enableEmulators; # emulator related: if it should be enabled or not
+          useGoogleAPIs = true;
+          extraLicenses = [
+            "android-googletv-license"
+            "android-sdk-arm-dbt-license"
+            "android-sdk-license"
+            "android-sdk-preview-license"
+            "google-gdk-license"
+            "intel-android-extra-license"
+            "intel-android-sysimage-license"
+            "mips-android-sysimage-license"            ];
+        };
+        androidSdk = androidComposition.androidsdk;
       in
       {
-        devShells.default = pkgs.mkShell {
-          name = "flutter-env";
-
-          nativeBuildInputs = with pkgs; [
-            fvm
+        devShell = with pkgs; mkShell rec {
+          ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
+          ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+          JAVA_HOME = jdk11.home;
+          FLUTTER_ROOT = flutter;
+          DART_ROOT = "${flutter}/bin/cache/dart-sdk";
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
+          QT_QPA_PLATFORM = "wayland;xcb"; # emulator related: try using wayland, otherwise fall back to X.
+          # NB: due to the emulator's bundled qt version, it currently does not start with QT_QPA_PLATFORM="wayland".
+          # Maybe one day this will be supported.
+          buildInputs = [
+            androidSdk
+            flutter
+            qemu_kvm
+            gradle
+            jdk11
             cmake
             ninja
             pkg-config
             clang
-          ] ++ (if includeAndroid then [ androidSdk jdk17 ] else []);
-
-          buildInputs = libraries;
-
+          ];
+          # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
+          LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [vulkan-loader libGL]}";
+          # Globally installed packages, which are installed through `dart pub global activate package_name`,
+          # are located in the `$PUB_CACHE/bin` directory.
           shellHook = ''
-            # Linux Desktop Paths
-            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH"
-            export PKG_CONFIG_PATH="${pkgs.lib.makeSearchPath "lib/pkgconfig" (map (x: x.dev or x) libraries)}:$PKG_CONFIG_PATH"
-            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:$XDG_DATA_DIRS"
-
-            ${if includeAndroid then ''
-              # Android Specific Paths
-              export ANDROID_HOME="${androidSdk}/libexec/android-sdk"
-              export ANDROID_SDK_ROOT="${androidSdk}/libexec/android-sdk"
-              export JAVA_HOME="${pkgs.jdk17.home}"
-              export GRADLE_OPTS="-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/34.0.0/aapt2"
-              echo "🤖 Android SDK included."
-            '' else ''
-              echo "🖥️ Linux Desktop mode (Android SDK omitted)."
-            ''}
-            
-            echo "✅ Run 'flutter doctor' to check status."
-            # For Fish users
-            if [ "$SHELL" = "$(which fish)" ]; then
-              exec fish
+            if [ -z "$PUB_CACHE" ]; then
+              export PATH="$PATH:$HOME/.pub-cache/bin"
+            else
+              export PATH="$PATH:$PUB_CACHE/bin"
             fi
           '';
         };
