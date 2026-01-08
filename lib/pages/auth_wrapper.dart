@@ -37,7 +37,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
           FirebaseMessaging messaging = FirebaseMessaging.instance;
 
           // Request permission (iOS only, recommended on Android too)
-          NotificationSettings settings = await messaging.requestPermission();
+          NotificationSettings settings = await messaging.requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          );
           if (settings.authorizationStatus == AuthorizationStatus.authorized) {
             fcmToken = await messaging.getToken();
 
