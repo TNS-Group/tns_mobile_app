@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tns_mobile_app/notification_handler.dart';
 import 'package:tns_mobile_app/pages/auth_wrapper.dart';
 
 void main() async {
@@ -9,6 +10,7 @@ void main() async {
 
   if (Platform.isAndroid || Platform.isIOS) {
     await Firebase.initializeApp();
+    await NotificationService.instance.initialize();
   } 
 
   await SystemChrome.setPreferredOrientations([
