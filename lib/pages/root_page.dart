@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
@@ -774,6 +775,12 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           availability = availabilityFromCode(data["availability"] as int);
         });
       }
+    });
+
+    FirebaseMessaging.instance.onTokenRefresh .listen((fcmToken) {
+      sendDeviceToken(fcmToken, self.token!);
+    }).onError((err) {
+      print("what the fuck");
     });
 
     getTeacherPrefs(self.token!).then((d){

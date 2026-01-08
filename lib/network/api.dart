@@ -421,6 +421,16 @@ Future<bool> respond(String message, String tabletSession, String token) async {
   return (data != null);
 }
 
+Future<void> sendDeviceToken(String fcmToken, String token) async {
+  await postParse(
+    "/api/fcmToken",
+    token: token,
+    params: {
+      "fcm_token": fcmToken
+    }
+  );
+}
+
 Future<void> forceAvailability(Availability availability, TimeOfDay? until, String token) async {
   final thing = {
     "availability": availability.code.toString(),
