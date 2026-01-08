@@ -381,15 +381,12 @@ Future<Map<String, dynamic>?> updateProfile({
   return data; // Returns {'id': id, 'token': newTokenOrNull}
 }
 
-Future<Teacher?> login(String email, String password, [String? firebaseToken]) async {
+Future<Teacher?> login(String email, String password) async {
   Map<String, dynamic>? data = await postParse(
     "/api/login",
     params: {
       "email": email,
       "password": password,
-      
-      // if (firebaseToken != null)
-      "firebase_token": firebaseToken ?? ""
     },
   );
 
