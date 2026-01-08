@@ -766,16 +766,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       }
     });
 
-    _teacherStream = listenToTeacherEvents(self.token!);
-    _teacherStream.listen((data) {
-      if (data["event"] == "notify") {
-        _showEventDialog(data["tablet_session"]);
-      } else if (data["event"] == "switchAvailability") {
-        setState( () {
-          availability = availabilityFromCode(data["availability"] as int);
-        });
-      }
-    });
+    connectToStream();
 
     FirebaseMessaging.instance.onTokenRefresh .listen((fcmToken) {
       sendDeviceToken(fcmToken, self.token!);
@@ -795,6 +786,41 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     //     _dndVacant = prefs.getBool("dndVacant")!;
     //   }
     // });
+  }
+
+  void _handleReconnect() {
+    // Wait 3-5 seconds before trying again to avoid hammering the server
+    Future.delayed(Duration(seconds: 3), () {
+      if (mounted) { // Ensure the widget is still in the tree
+      print("Attempting to reconnect...");
+      connectToStream();
+    }
+    });
+  }
+
+  void connectToStream() {
+    _teacherStream = listenToTeacherEvents(self.token!);
+
+    _teacherStream.listen(
+    (data) {
+        if (data["event"] == "notify") {
+        _showEventDialog(data["tablet_session"]);
+      } else if (data["event"] == "switchAvailability") {
+        setState(() {
+          availability = availabilityFromCode(data["availability"] as int);
+        });
+      }
+      },
+      onError: (error) {
+        print("Stream Error: $error");
+        _handleReconnect();
+      },
+      onDone: () {
+        print("Stream closed by server.");
+        _handleReconnect();
+      },
+      cancelOnError: true,
+    );
   }
 
   @override void dispose() {
