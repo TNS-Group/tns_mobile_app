@@ -771,6 +771,12 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       print("what the fuck");
     });
 
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage msg) {
+      if (msg.data["event"] == "notify") {
+        _showEventDialog(msg.data["tablet_session"]);
+      }
+    });
+
     getTeacherPrefs(self.token!).then((d){
       _dndVacant = d!["dnd_vacant"];
     });

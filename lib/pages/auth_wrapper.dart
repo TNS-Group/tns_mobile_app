@@ -20,8 +20,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
   late GlobalKey<TNSLoginPageState> loginPageKey;
   late SharedPreferences prefs;
 
+  String? tabletToken;
+
   @override void initState() {
     super.initState();
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleNotificationClick(message);
+    });
+
+    // 2. App was completely closed (Terminated)
+    _checkForInitialMessage();
 
     loginPageKey = GlobalKey<TNSLoginPageState>();
     loginPage = TNSLoginPage(
