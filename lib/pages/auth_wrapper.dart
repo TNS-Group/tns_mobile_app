@@ -49,7 +49,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           if (settings.authorizationStatus == AuthorizationStatus.authorized) {
             fcmToken = await messaging.getToken();
 
-            api.login(email, password, fcmToken!).then((teacher) {
+            api.login(email, password).then((teacher) {
               if (teacher == null) {
                   loginPageKey.currentState?.setState(() {
                     loginPageKey.currentState?.loading = false;
@@ -64,12 +64,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
                   loginPageKey.currentState?.setState(() {
                     loginPageKey.currentState?.loading = false;
                   });
+
+                  api.sendDeviceToken(fcmToken!, teacher.token!);
                 }
             });
           }
         }
 
-        api.login(email, password, fcmToken).then((teacher) {
+        api.login(email, password).then((teacher) {
           if (teacher == null) {
               loginPageKey.currentState?.setState(() {
                 loginPageKey.currentState?.loading = false;
