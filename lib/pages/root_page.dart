@@ -774,6 +774,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage msg) {
       if (msg.data["event"] == "notify") {
         _showEventDialog(msg.data["tablet_session"]);
+        print("nigga");
       }
     });
 
@@ -1242,20 +1243,20 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                         icon: Icon(Icons.subject)
                       ), 
                     ),
-                    Row(
-                      children: [
-                        Expanded(child: const Text("Turn-on DND while vacant")),
-                        Switch(
-                          onChanged: (value) {
-                            setTeacherPrefs(self.token!, dndVacant: value);
-                            setState((){
-                              _dndVacant = value;
-                            });
-                          },
-                          value: _dndVacant,
-                        ),
-                      ],
-                    )
+                    // Row(
+                    //   children: [
+                    //     Expanded(child: const Text("Turn-on DND while vacant")),
+                    //     Switch(
+                    //       onChanged: (value) {
+                    //         setTeacherPrefs(self.token!, dndVacant: value);
+                    //         setState((){
+                    //           _dndVacant = value;
+                    //         });
+                    //       },
+                    //       value: _dndVacant,
+                    //     ),
+                    //   ],
+                    // )
                   ],
                 )
               ),
