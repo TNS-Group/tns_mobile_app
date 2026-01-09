@@ -38,21 +38,20 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
 
   bool showLoading = true;
   int _selectedPageIndex = 0;
+  int _imageCacheBuster = 0;
 
-  int _cacheBusterssssssssssssss = 0;
-
-  // Teacher Data
   late Teacher self;
 
   Map<int, Schedule> schedules = {};
   Map<int, SchoolClass> classes = {};
 
   Availability availability = Availability.absent;
-  Availability _tempAvailabiity = Availability.absent;
 
   WeekDay selectedDay = WeekDay.fromCode(DateTime.now().weekday - 1);
 
   late Stream<Map<String, dynamic>> _teacherStream;
+
+  bool _isDialogShowing = false;
 
   Future<XFile?> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -688,8 +687,6 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     });
   }
 
-  bool _isDialogShowing = false;
-
   void _showEventDialog(String tabletSession) {
     if (_isDialogShowing) return;
 
@@ -792,31 +789,35 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     // Wait 3-5 seconds before trying again to avoid hammering the server
     Future.delayed(Duration(seconds: 3), () {
       if (mounted) { // Ensure the widget is still in the tree
-      print("Attempting to reconnect...");
-      connectToStream();
-    }
+        print("Attempting to reconnect...");
+        connectToStream();
+      }
     });
+
+    showLoading = false;
   }
 
   void connectToStream() {
     _teacherStream = listenToTeacherEvents(self.token!);
 
     _teacherStream.listen(
-    (data) {
+      (data) {
         if (data["event"] == "notify") {
-        _showEventDialog(data["tablet_session"]);
-      } else if (data["event"] == "switchAvailability") {
-        setState(() {
-          availability = availabilityFromCode(data["availability"] as int);
-        });
-      }
+          _showEventDialog(data["tablet_session"]);
+        } else if (data["event"] == "switchAvailability") {
+          setState(() {
+            availability = availabilityFromCode(data["availability"] as int);
+          });
+        }
       },
       onError: (error) {
         print("Stream Error: $error");
+        showLoading = true;
         _handleReconnect();
       },
       onDone: () {
         print("Stream closed by server.");
+        showLoading = true;
         _handleReconnect();
       },
       cancelOnError: true,
@@ -1107,7 +1108,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                             child: Opacity(
                               opacity: availability == Availability.available ? 1 : constants.opacityUnavailable,
                               child: Image(
-                                image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_cacheBusterssssssssssssss'),
+                                image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_imageCacheBuster'),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Icon(Icons.broken_image, size: 64, color: Theme.of(context).colorScheme.onSurface);
@@ -1171,7 +1172,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                                     uploadProfilePicture(f, self.token!).then((_){
                                       Future.delayed(Duration(milliseconds: 250)).then((_){
                                         setState(() {
-                                          _cacheBusterssssssssssssss++;
+                                          _imageCacheBuster++;
                                         });
                                       });
                                     });
