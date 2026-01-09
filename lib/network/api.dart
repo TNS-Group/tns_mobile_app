@@ -300,10 +300,11 @@ Future<Teacher?> getTeacherSelf(String token) async {
     data["id"] as int,
     data["full_name"] as String,
     prefix: data["prefix"] as String?,
-    suffix: data["postfix"] as String?, // Note: Server uses 'postfix'
+    suffix: data["postfix"] as String?,
     subject: data["main_subject"] as String?,
-    token: token, // We pass the token back
+    token: token,
     email: data["email_address"] as String?,
+    availability: availabilityFromCode(data["availability"] as int? ?? 3),
   );
 }
 

@@ -25,13 +25,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override void initState() {
     super.initState();
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationClick(message);
-    });
-
-    // 2. App was completely closed (Terminated)
-    _checkForInitialMessage();
-
     loginPageKey = GlobalKey<TNSLoginPageState>();
     loginPage = TNSLoginPage(
       key: loginPageKey,

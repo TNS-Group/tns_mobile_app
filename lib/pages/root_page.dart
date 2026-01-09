@@ -28,8 +28,6 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
   late TabController _tabController;
   final GlobalKey _bottomBarBuilderKey = GlobalKey();
 
-  bool _dndVacant = true;
-
   // Input Controllers
   late TextEditingController prefixTextController;
   late TextEditingController postfixTextController;
@@ -778,9 +776,9 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       }
     });
 
-    getTeacherPrefs(self.token!).then((d){
-      _dndVacant = d!["dnd_vacant"];
-    });
+    // getTeacherPrefs(self.token!).then((d){
+    //   _dndVacant = d!["dnd_vacant"];
+    // });
     // SharedPreferences.getInstance().then((v){
     //   prefs = v;
     //
@@ -813,7 +811,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           _showEventDialog(data["tablet_session"]);
         } else if (data["event"] == "switchAvailability") {
           setState(() {
-            availability = availabilityFromCode(data["availability"] as int);
+            self.availability = availabilityFromCode(data["self.availability"] as int);
           });
         }
       },
@@ -870,11 +868,11 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               flex: 2,
               child: DropdownButtonFormField<Availability>(
                 decoration: InputDecoration(),
-                initialValue: availability,
+                initialValue: self.availability,
                 items: Availability.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label))).toList(),
                 onChanged: (v) => setState(() {
-                  availability = v ?? Availability.absent;
-                  forceAvailability(availability, null, self.token!);
+                  self.availability = v ?? Availability.absent;
+                  forceAvailability(self.availability, null, self.token!);
                 }),
               )
             ),
@@ -893,15 +891,15 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: availability != Availability.absent ? null : (){
+            onPressed: self.availability != Availability.absent ? null : (){
               setState(() {
-                availability = Availability.available;
-                forceAvailability(availability, null, self.token!);
+                self.availability = Availability.available;
+                forceAvailability(self.availability, null, self.token!);
               });
             }, 
             child: Padding( 
               padding: EdgeInsets.all(16),
-              child: Text(availability != Availability.absent ? "Already Checked In" : "Check In")
+              child: Text(self.availability != Availability.absent ? "Already Checked In" : "Check In")
             )
           ),
         ),
@@ -1113,7 +1111,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                           ),
                           Positioned.fill(
                             child: Opacity(
-                              opacity: availability == Availability.available ? 1 : constants.opacityUnavailable,
+                              opacity: self.availability == Availability.available ? 1 : constants.opacityUnavailable,
                               child: Image(
                                 image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_imageCacheBuster'),
                                 fit: BoxFit.cover,
@@ -1144,14 +1142,14 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                                   self.name, 
                                   textScaler: TextScaler.linear(constants.phi), 
                                   style: TextStyle(
-                                    color: availability == Availability.available ? 
+                                    color: self.availability == Availability.available ? 
                                     Theme.of(context).colorScheme.onSurface :
                                     Theme.of(context).colorScheme.onSurface.withAlpha(128)
                                   ),
                                 ),
-                                Text(availability.label,
+                                Text(self.availability.label,
                                   style: TextStyle(
-                                    color: availability == Availability.available ? 
+                                    color: self.availability == Availability.available ? 
                                     Colors.green :
                                     Colors.red,
                                     fontWeight: FontWeight.bold
@@ -1316,7 +1314,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             prefix: self.prefix,
             postfix: self.suffix,
             subject: self.subject.toString(),
-            availability: availability,
+            availability: self.availability,
           ),
         ),
       ),
