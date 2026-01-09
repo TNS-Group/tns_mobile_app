@@ -202,7 +202,8 @@ Future<Schedule?> getSchedule(int id) async {
     data["subject"] as String,
     WeekDay.fromCode(data["weekday"] as int),
     TimeOfDay.fromDateTime(dtIn),
-    TimeOfDay.fromDateTime(dtOut)
+    TimeOfDay.fromDateTime(dtOut),
+    data["is_break"] as bool? ?? false
   );
 }
 
@@ -281,6 +282,7 @@ Future<List<Schedule>> getTeacherSchedules(int teacherId) async {
       WeekDay.fromCode(item["weekday"] as int),
       TimeOfDay.fromDateTime(dtIn),
       TimeOfDay.fromDateTime(dtOut),
+      item["is_break"] as bool
     );
   }).toList();
 }

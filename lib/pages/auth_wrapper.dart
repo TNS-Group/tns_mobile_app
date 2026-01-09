@@ -38,7 +38,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
         if (Platform.isAndroid || Platform.isIOS) {
           FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-          // Request permission (iOS only, recommended on Android too)
           NotificationSettings settings = await messaging.requestPermission(
             alert: true,
             announcement: false,
@@ -90,22 +89,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
               });
             }
         });
-        // if (!mounted) return;
-        // showDialog(
-        //   context: context,
-        //   builder: (context) => AlertDialog(
-        //     title: const Text("Notification"),
-        //     content: const Text(""),
-        //     actions: [
-        //       FilledButton(
-        //         onPressed: () {
-        //           Navigator.pop(context);
-        //         }, 
-        //         child: const Text("Ok")
-        //       )
-        //     ],
-        //   ),
-        // );
       },
     );
 

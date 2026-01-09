@@ -456,7 +456,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                 Navigator.pop(context);
 
                 Schedule sched = Schedule(
-                  index, selectedClass?.id ?? 0, self.id, subjectInputController.text, selectedDay ?? WeekDay.monday, startTime ?? TimeOfDay.now(), endTime ?? TimeOfDay.now());
+                  index, selectedClass?.id ?? 0, self.id, subjectInputController.text, selectedDay ?? WeekDay.monday, startTime ?? TimeOfDay.now(), endTime ?? TimeOfDay.now(), false);
 
                 final scfMsgr = ScaffoldMessenger.of(context);
                 editSchedule(sched, self.token ?? '')
@@ -641,7 +641,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   subjectInputController.text, 
                   selectedDay ?? WeekDay.monday, 
                   startTime ?? TimeOfDay.now(), 
-                  endTime ?? TimeOfDay.now()
+                  endTime ?? TimeOfDay.now(),
+                  false
                 );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
