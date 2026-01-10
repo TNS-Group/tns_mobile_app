@@ -8,8 +8,9 @@ class ScheduleItem extends StatelessWidget {
   final String className;
   final TimeOfDay start;
   final TimeOfDay end;
+  final bool isBreak;
 
-  const ScheduleItem( { super.key, required this.start, required this.end, this.className = "Class", this.subject = "N/A", this.weekday = WeekDay.monday } );
+  const ScheduleItem( { super.key, required this.start, required this.end, this.className = "Class", this.subject = "N/A", this.weekday = WeekDay.monday, this.isBreak = false } );
 
   @override Widget build(BuildContext context) {
     return  
@@ -21,7 +22,7 @@ class ScheduleItem extends StatelessWidget {
             begin: Alignment(0.5, 1.0),
             colors: [
               Theme.of(context).colorScheme.surfaceContainer,
-              Colors.blue
+              isBreak ? Colors.grey : Colors.blue
             ]
           )
         ),

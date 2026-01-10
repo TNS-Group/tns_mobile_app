@@ -13,7 +13,6 @@ import 'package:tns_mobile_app/models/schedule.dart';
 import 'package:tns_mobile_app/constants.dart' as constants;
 import 'package:tns_mobile_app/globals.dart' as globals;
 
-
 class TNSRootPage extends StatefulWidget {
   final Teacher initialTeacher;
 
@@ -23,7 +22,8 @@ class TNSRootPage extends StatefulWidget {
   State<TNSRootPage> createState() => _TNSRootPageState();
 }
 
-class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin {
+class _TNSRootPageState extends State<TNSRootPage>
+    with TickerProviderStateMixin {
   late PageController _pageViewController;
   late TabController _tabController;
   final GlobalKey _bottomBarBuilderKey = GlobalKey();
@@ -53,7 +53,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
 
   Future<XFile?> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    
+
     // Use .pickImage for pictures or .pickVideo for videos
     final XFile? file = await picker.pickImage(
       source: ImageSource.gallery, // Or ImageSource.camera
@@ -75,7 +75,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       );
 
       if (picked != null) {
-      untilTime = picked;
+        untilTime = picked;
       }
     }
 
@@ -83,54 +83,51 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text("Set Availability"),
           content: StatefulBuilder(
             builder: (context, setState) {
               return Column(
-                // Assuming this Column extension for spacing exists in your project.
-                // If not, replace with default Column and add SizedBox between children.
-                // For example: replace Column(spacing: 8, ...) with Column(..., children: [..., const SizedBox(height: 8), ...])
-                // For simplicity, I'll use a standard Column with SizedBoxes.
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Display error message at the top if there is one
                   if (errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Text(
-                      errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        errorMessage!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
                     ),
-                  ),
 
-                  // ---- AVAILABILITY DROPDOWN ----
                   DropdownButtonFormField<Availability>(
-                  decoration: const InputDecoration(
-                    labelText: "Availability Status",
-                    border: OutlineInputBorder(),
+                    decoration: const InputDecoration(
+                      labelText: "Availability Status",
+                      border: OutlineInputBorder(),
+                    ),
+                    initialValue: selectedAvailability,
+                    items: Availability.values
+                        .map(
+                          (a) =>
+                              DropdownMenuItem(value: a, child: Text(a.label)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() {
+                      selectedAvailability = v;
+                      errorMessage = null;
+                    }),
                   ),
-                  initialValue: selectedAvailability,
-                  items: Availability.values
-                  .map((a) => DropdownMenuItem(
-                    value: a,
-                    child: Text(a.label)
-                  ))
-                  .toList(),
-                  onChanged: (v) => setState(() {
-                    selectedAvailability = v;
-                    errorMessage = null; // Clear error on change
-                  }),
-                ),
 
                   const SizedBox(height: 16),
 
-                  // ---- UNTIL TIME PICKER ----
                   InkWell(
                     onTap: () async {
                       await pickTime();
                       setState(() {
-                        errorMessage = null; // Clear error on change
+                        errorMessage = null;
                       });
                     },
                     child: InputDecorator(
@@ -140,9 +137,11 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       ),
                       child: Text(
                         untilTime != null
-                        ? untilTime!.format(context)
-                        : "Select time",
-                        style: untilTime == null ? const TextStyle(color: Colors.grey) : null,
+                            ? untilTime!.format(context)
+                            : "Select time",
+                        style: untilTime == null
+                            ? const TextStyle(color: Colors.grey)
+                            : null,
                       ),
                     ),
                   ),
@@ -159,13 +158,23 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               onPressed: () {
                 // VALIDATION
                 if (selectedAvailability == null || untilTime == null) {
-                  setState(() {}); // <-- not needed for AlertDialog, but safe
+                  setState(() {});
                   errorMessage = "Please fill in all fields";
                   (context as Element).markNeedsBuild();
                   return;
                 }
 
-                forceAvailability(selectedAvailability!, untilTime!, self.token!);
+                if (untilTime!.isBefore(TimeOfDay.now())) {
+                  errorMessage = "Invalid Time";
+                  (context as Element).markNeedsBuild();
+                  return;
+                }
+
+                forceAvailability(
+                  selectedAvailability!,
+                  untilTime!,
+                  self.token!,
+                );
                 setState(() {
                   availability = selectedAvailability!;
                 });
@@ -190,7 +199,9 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text("Change Password"),
           content: StatefulBuilder(
             builder: (context, setState) {
@@ -201,15 +212,13 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   TextField(
                     decoration: InputDecoration(
                       labelText: "Old Password",
-                      errorText: errorMessage
+                      errorText: errorMessage,
                     ),
-                    controller: oldPassInputController
+                    controller: oldPassInputController,
                   ),
                   TextField(
-                    decoration: InputDecoration(
-                      labelText: "New Password",
-                    ),
-                    controller: newPassInputController
+                    decoration: InputDecoration(labelText: "New Password"),
+                    controller: newPassInputController,
                   ),
                 ],
               );
@@ -222,7 +231,11 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             ),
             FilledButton(
               onPressed: () {
-                updateProfile(token: self.token as String, oldPassword: oldPassInputController.text, newPassword: newPassInputController.text).then((response){
+                updateProfile(
+                  token: self.token as String,
+                  oldPassword: oldPassInputController.text,
+                  newPassword: newPassInputController.text,
+                ).then((response) {
                   setState(() {
                     if (response == null) {
                       setState(() {});
@@ -257,7 +270,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Confirm Deletion", textScaler: TextScaler.linear(constants.phi),),
+                Text(
+                  "Confirm Deletion",
+                  textScaler: TextScaler.linear(constants.phi),
+                ),
                 Text("Are you sure?"),
               ],
             ),
@@ -267,25 +283,28 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               // style: ButtonStyle(
               //   backgroundColor: WidgetStatePropertyAll(Colors.red)
               // ),
-              onPressed: (){
+              onPressed: () {
                 Navigator.pop(context);
               },
               child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: (){
+              onPressed: () {
                 deleteSchedule(scheduleId, self.token!);
 
                 setState(() {
                   schedules.remove(scheduleId);
                 });
                 Navigator.pop(context);
-              }, 
-              child: const Text("Yes, Delete", style: TextStyle(color: Colors.red),)
-            )
+              },
+              child: const Text(
+                "Yes, Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
           ],
         );
-      }
+      },
     );
   }
 
@@ -323,15 +342,16 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             errorTimeOutMessage = "Invalid Time";
           }
         }
-      } else {
-      }
+      } else {}
     }
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text("Edit Schedule"),
           content: StatefulBuilder(
             builder: (context, setState) {
@@ -342,23 +362,26 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   TextField(
                     decoration: InputDecoration(
                       labelText: "Subject",
-                      errorText: errorMessage
+                      errorText: errorMessage,
                     ),
-                    controller: subjectInputController
+                    controller: subjectInputController,
                   ),
 
                   // ---- DAY DROPDOWN ----
                   DropdownButtonFormField<WeekDay>(
-                  decoration: InputDecoration(
-                    labelText: "Day",
-                    errorText: errorMessage
+                    decoration: InputDecoration(
+                      labelText: "Day",
+                      errorText: errorMessage,
+                    ),
+                    initialValue: selectedDay,
+                    items: WeekDay.values
+                        .map(
+                          (d) =>
+                              DropdownMenuItem(value: d, child: Text(d.label)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedDay = v),
                   ),
-                  initialValue: selectedDay,
-                  items: WeekDay.values
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
-                    .toList(),
-                  onChanged: (v) => setState(() => selectedDay = v),
-                ),
 
                   const SizedBox(height: 12),
 
@@ -366,15 +389,17 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   DropdownButtonFormField<SchoolClass>(
                     decoration: InputDecoration(
                       labelText: "Class",
-                      errorText: errorMessage
+                      errorText: errorMessage,
                     ),
                     initialValue: selectedClass,
                     items: classes.values
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
-                      .toList(),
-                    onChanged: (v) => setState(() => selectedClass = v
+                        .map(
+                          (c) =>
+                              DropdownMenuItem(value: c, child: Text(c.name)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedClass = v),
                   ),
-                ),
 
                   const SizedBox(height: 12),
 
@@ -392,8 +417,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       ),
                       child: Text(
                         startTime != null
-                        ? startTime!.format(context)
-                        : "Select time",
+                            ? startTime!.format(context)
+                            : "Select time",
                       ),
                     ),
                   ),
@@ -414,8 +439,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       ),
                       child: Text(
                         endTime != null
-                        ? endTime!.format(context)
-                        : "Select time",
+                            ? endTime!.format(context)
+                            : "Select time",
                       ),
                     ),
                   ),
@@ -425,16 +450,16 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           ),
           actions: [
             TextButton(
-              onPressed: (){
+              onPressed: () {
                 confirmationDeleteSchedule(context, index);
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.delete_outline, color: Colors.red,),
-                  const Text("Delete", style: TextStyle(color: Colors.red))
+                  const Icon(Icons.delete_outline, color: Colors.red),
+                  const Text("Delete", style: TextStyle(color: Colors.red)),
                 ],
-              )
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -444,9 +469,9 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               onPressed: () {
                 // VALIDATION → Show warning if something is missing
                 if (selectedDay == null ||
-                  selectedClass == null ||
-                  startTime == null ||
-                  endTime == null) {
+                    selectedClass == null ||
+                    startTime == null ||
+                    endTime == null) {
                   setState(() {}); // <-- not needed for AlertDialog, but safe
                   errorMessage = "Please fill in all fields";
                   (context as Element).markNeedsBuild();
@@ -456,15 +481,22 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                 Navigator.pop(context);
 
                 Schedule sched = Schedule(
-                  index, selectedClass?.id ?? 0, self.id, subjectInputController.text, selectedDay ?? WeekDay.monday, startTime ?? TimeOfDay.now(), endTime ?? TimeOfDay.now(), false);
+                  index,
+                  selectedClass?.id ?? 0,
+                  self.id,
+                  subjectInputController.text,
+                  selectedDay ?? WeekDay.monday,
+                  startTime ?? TimeOfDay.now(),
+                  endTime ?? TimeOfDay.now(),
+                  false,
+                );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
-                editSchedule(sched, self.token ?? '')
-                .then((id){
+                editSchedule(sched, self.token ?? '').then((id) {
                   if (id == null) {
                     scfMsgr.clearSnackBars();
                     scfMsgr.showSnackBar(
-                      SnackBar(content: Text('Error occured..'))
+                      SnackBar(content: Text('Error occured..')),
                     );
                     return;
                   }
@@ -516,15 +548,16 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
             errorTimeOutMessage = "Invalid Time";
           }
         }
-      } else {
-      }
+      } else {}
     }
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text("Add Schedule"),
           content: StatefulBuilder(
             builder: (context, setState) {
@@ -535,23 +568,26 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   TextField(
                     decoration: InputDecoration(
                       labelText: "Subject",
-                      errorText: errorMessage
+                      errorText: errorMessage,
                     ),
-                    controller: subjectInputController
+                    controller: subjectInputController,
                   ),
 
                   // ---- DAY DROPDOWN ----
                   DropdownButtonFormField<WeekDay>(
-                  decoration: InputDecoration(
-                    labelText: "Day",
-                    errorText: errorMessage
+                    decoration: InputDecoration(
+                      labelText: "Day",
+                      errorText: errorMessage,
+                    ),
+                    initialValue: selectedDay,
+                    items: WeekDay.values
+                        .map(
+                          (d) =>
+                              DropdownMenuItem(value: d, child: Text(d.label)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedDay = v),
                   ),
-                  initialValue: selectedDay,
-                  items: WeekDay.values
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
-                    .toList(),
-                  onChanged: (v) => setState(() => selectedDay = v),
-                ),
 
                   const SizedBox(height: 12),
 
@@ -559,15 +595,17 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   DropdownButtonFormField<SchoolClass>(
                     decoration: InputDecoration(
                       labelText: "Class",
-                      errorText: errorMessage
+                      errorText: errorMessage,
                     ),
                     initialValue: selectedClass,
                     items: classes.values
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
-                      .toList(),
-                    onChanged: (v) => setState(() => selectedClass = v
+                        .map(
+                          (c) =>
+                              DropdownMenuItem(value: c, child: Text(c.name)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedClass = v),
                   ),
-                ),
 
                   const SizedBox(height: 12),
 
@@ -586,8 +624,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       ),
                       child: Text(
                         startTime != null
-                        ? startTime!.format(context)
-                        : "Select time",
+                            ? startTime!.format(context)
+                            : "Select time",
                       ),
                     ),
                   ),
@@ -608,8 +646,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       ),
                       child: Text(
                         endTime != null
-                        ? endTime!.format(context)
-                        : "Select time",
+                            ? endTime!.format(context)
+                            : "Select time",
                       ),
                     ),
                   ),
@@ -626,7 +664,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               onPressed: () {
                 // VALIDATION → Show warning if something is missing
                 errorMessage = null;
-                if (selectedDay == null || selectedClass == null || startTime == null || endTime == null) {
+                if (selectedDay == null ||
+                    selectedClass == null ||
+                    startTime == null ||
+                    endTime == null) {
                   setState(() {});
                   errorMessage = "Please fill in all fields";
                   (context as Element).markNeedsBuild();
@@ -635,23 +676,22 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                 Navigator.pop(context);
 
                 Schedule sched = Schedule(
-                  0, 
-                  selectedClass?.id ?? 0, 
+                  0,
+                  selectedClass?.id ?? 0,
                   self.id,
-                  subjectInputController.text, 
-                  selectedDay ?? WeekDay.monday, 
-                  startTime ?? TimeOfDay.now(), 
+                  subjectInputController.text,
+                  selectedDay ?? WeekDay.monday,
+                  startTime ?? TimeOfDay.now(),
                   endTime ?? TimeOfDay.now(),
-                  false
+                  false,
                 );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
-                createSchedule(sched, self.token ?? '')
-                .then((id){
+                createSchedule(sched, self.token ?? '').then((id) {
                   if (id == null) {
                     scfMsgr.clearSnackBars();
                     scfMsgr.showSnackBar(
-                      SnackBar(content: Text('Error occured..'))
+                      SnackBar(content: Text('Error occured..')),
                     );
                     return;
                   }
@@ -675,13 +715,9 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     final clss = await getClassesList();
     final schds = await getTeacherSchedules(self.id);
 
-    setState((){
-      classes.addAll({
-        for (final c in clss) c.id: c
-      });
-      schedules.addAll({
-        for (final s in schds) s.id: s
-      });
+    setState(() {
+      classes.addAll({for (final c in clss) c.id: c});
+      schedules.addAll({for (final s in schds) s.id: s});
       showLoading = false;
     });
   }
@@ -701,7 +737,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("A person is calling you from the TNS Kiosk.", textAlign: TextAlign.start),
+            const Text(
+              "A person is calling you from the TNS Kiosk.",
+              textAlign: TextAlign.start,
+            ),
             SizedBox(
               width: double.infinity,
               child: TextField(
@@ -712,30 +751,31 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   hintText: "Response",
                   border: OutlineInputBorder(),
                 ),
-              )
-            )
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.pop(context);
-            }, 
-            child: const Text("Ignore")
+            },
+            child: const Text("Ignore"),
           ),
           FilledButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.pop(context);
               respond(messageController.text, tabletSession, self.token!);
-            }, 
-            child: const Text("Respond")
-          )
+            },
+            child: const Text("Respond"),
+          ),
         ],
       ),
     ).then((_) => _isDialogShowing = false); // Reset when closed
   }
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
     _pageViewController = PageController();
     _tabController = TabController(length: 3, vsync: this);
@@ -754,21 +794,24 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     postfixTextController.text = self.suffix ?? '';
     subjectTextController.text = self.subject ?? '';
 
-    _pageViewController.addListener((){
+    _pageViewController.addListener(() {
       if (_bottomBarBuilderKey.currentState != null) {
-        _bottomBarBuilderKey.currentState!.setState((){
-          _selectedPageIndex = _tabController.index = (_pageViewController.page?.round() ?? 0);
+        _bottomBarBuilderKey.currentState!.setState(() {
+          _selectedPageIndex = _tabController.index =
+              (_pageViewController.page?.round() ?? 0);
         });
       }
     });
 
     connectToStream();
 
-    FirebaseMessaging.instance.onTokenRefresh .listen((fcmToken) {
-      sendDeviceToken(fcmToken, self.token!);
-    }).onError((err) {
-      print("what the fuck");
-    });
+    FirebaseMessaging.instance.onTokenRefresh
+        .listen((fcmToken) {
+          sendDeviceToken(fcmToken, self.token!);
+        })
+        .onError((err) {
+          print("what the fuck");
+        });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage msg) {
       if (msg.data["event"] == "notify") {
@@ -788,13 +831,14 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     //   } else {
     //     _dndVacant = prefs.getBool("dndVacant")!;
     //   }
-    // });
+
   }
 
   void _handleReconnect() {
     // Wait 3-5 seconds before trying again to avoid hammering the server
     Future.delayed(Duration(seconds: 3), () {
-      if (mounted) { // Ensure the widget is still in the tree
+      if (mounted) {
+        // Ensure the widget is still in the tree
         print("Attempting to reconnect...");
         connectToStream();
       }
@@ -812,7 +856,9 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           _showEventDialog(data["tablet_session"]);
         } else if (data["event"] == "switchAvailability") {
           setState(() {
-            self.availability = availabilityFromCode(data["self.availability"] as int);
+            self.availability = availabilityFromCode(
+              data["self.availability"] as int,
+            );
           });
         }
       },
@@ -830,7 +876,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
   }
 
-  @override void dispose() {
+  @override
+  void dispose() {
     super.dispose();
     _pageViewController.dispose();
     _tabController.dispose();
@@ -845,9 +892,10 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
     );
   }
 
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final sortedSchedules = schedules.values.toList();
-    sortedSchedules.sort((a,b) => a.timeIn.compareTo(b.timeIn));
+    sortedSchedules.sort((a, b) => a.timeIn.compareTo(b.timeIn));
 
     // Home Page
     final quickSettings = Column(
@@ -860,22 +908,26 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
               child: Row(
                 spacing: 8,
                 children: [
-                  Icon(Icons.person, size: 32,),
+                  Icon(Icons.person, size: 32),
                   const Text("Availability"),
                 ],
-              )
+              ),
             ),
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<Availability>(
                 decoration: InputDecoration(),
                 initialValue: self.availability,
-                items: Availability.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label))).toList(),
+                items: Availability.values
+                    .map(
+                      (d) => DropdownMenuItem(value: d, child: Text(d.label)),
+                    )
+                    .toList(),
                 onChanged: (v) => setState(() {
                   self.availability = v ?? Availability.absent;
                   forceAvailability(self.availability, null, self.token!);
                 }),
-              )
+              ),
             ),
           ],
         ),
@@ -883,42 +935,50 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () => showAvailabilityUntilPopup(context),
-            child: Padding( 
+            child: Padding(
               padding: EdgeInsets.all(16),
-              child: const Text("Set Availability Until")
-            )
+              child: const Text("Set Availability Until"),
+            ),
           ),
         ),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: self.availability != Availability.absent ? null : (){
-              setState(() {
-                self.availability = Availability.available;
-                forceAvailability(self.availability, null, self.token!);
-              });
-            }, 
-            child: Padding( 
+            onPressed: self.availability != Availability.absent
+                ? null
+                : () {
+                    setState(() {
+                      self.availability = Availability.available;
+                      forceAvailability(self.availability, null, self.token!);
+                    });
+                  },
+            child: Padding(
               padding: EdgeInsets.all(16),
-              child: Text(self.availability != Availability.absent ? "Already Checked In" : "Check In")
-            )
+              child: Text(
+                self.availability != Availability.absent
+                    ? "Already Checked In"
+                    : "Check In",
+              ),
+            ),
           ),
         ),
       ],
     );
 
-    final lsVwChildren = [ for (Schedule i in sortedSchedules) 
-      if (TimeOfDay.now().isBefore(i.timeOut))
-      Padding(
-        padding: EdgeInsetsGeometry.only(bottom: 8), 
-        child: ScheduleItem(
-          start: i.timeIn,
-          end: i.timeOut,
-          className: classes[i.classId]?.name ?? '',
-          subject: i.subject,
-          weekday: i.weekday,
-        )
-      ) 
+    final lsVwChildren = [
+      for (Schedule i in sortedSchedules)
+        if (TimeOfDay.now().isBefore(i.timeOut))
+          Padding(
+            padding: EdgeInsetsGeometry.only(bottom: 8),
+            child: ScheduleItem(
+              start: i.timeIn,
+              end: i.timeOut,
+              className: classes[i.classId]?.name ?? '',
+              subject: i.subject,
+              weekday: i.weekday,
+              isBreak: i.isBreak,
+            ),
+          ),
     ];
 
     final classesList = ClipRRect(
@@ -928,12 +988,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         height: 256,
         child: Stack(
           children: [
-
             // Scrollable List
-            ListView(
-              shrinkWrap: true,
-              children: lsVwChildren,
-            ),
+            ListView(shrinkWrap: true, children: lsVwChildren),
 
             Positioned.fill(
               child: IgnorePointer(
@@ -945,36 +1001,34 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       colors: [
                         Theme.of(context).colorScheme.surface.withAlpha(0),
                         Theme.of(context).colorScheme.surface,
-                      ]
-                    )
+                      ],
+                    ),
                   ),
                 ),
               ),
-            )
-          ]
-        )
+            ),
+          ],
+        ),
       ),
     );
 
     final homePage = SingleChildScrollView(
       padding: EdgeInsets.all(16),
-      child: Column (
+      child: Column(
         spacing: 8,
         children: [
           quickSettings,
-          const SizedBox(height: 32,),
-          if (lsVwChildren.isNotEmpty) const Text(
-            'Next Classes'
-          )
-
-          else const Text(
-            "Woohoo! You have no upcoming classes", 
-            style: TextStyle(fontStyle: FontStyle.italic
+          const SizedBox(height: 32),
+          if (lsVwChildren.isNotEmpty)
+            const Text('Next Classes')
+          else
+            const Text(
+              "Woohoo! You have no upcoming classes",
+              style: TextStyle(fontStyle: FontStyle.italic),
             ),
-          ),
-          classesList
+          classesList,
         ],
-      )
+      ),
     );
 
     // Schedule Page
@@ -984,24 +1038,27 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         spacing: 16,
         children: [
           Row(
-            children: [ for (final w in WeekDay.values)
-              Expanded(
-                child: w == selectedDay ? FilledButton(
-                  onPressed: (){
-                    setState((){
-                      selectedDay = w;
-                    });
-                  }, 
-                  child: Text(w.label.substring(0, 3))
-                ) : TextButton(
-                  onPressed: (){
-                    setState((){
-                      selectedDay = w;
-                    });
-                  }, 
-                  child: Text(w.label.substring(0, 3))
+            children: [
+              for (final w in WeekDay.values)
+                Expanded(
+                  child: w == selectedDay
+                      ? FilledButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedDay = w;
+                            });
+                          },
+                          child: Text(w.label.substring(0, 3)),
+                        )
+                      : TextButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedDay = w;
+                            });
+                          },
+                          child: Text(w.label.substring(0, 3)),
+                        ),
                 ),
-              )
             ],
           ),
           Expanded(
@@ -1011,76 +1068,88 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                   borderRadius: BorderRadius.circular(16),
                   child: ListView(
                     shrinkWrap: true,
-                    children: (sortedSchedules.isEmpty) ? [ Center(
-                      child: const Text(
-                        "Woohoo! You have no upcoming classes", 
-                        style: TextStyle(fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    )] : [ for (Schedule i in sortedSchedules)
-                      if (i.weekday == selectedDay)
-                      Padding(
-                        padding: EdgeInsetsGeometry.only(bottom: 8), 
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Stack(
-                            fit: StackFit.loose,
-                            children: [
-                              ScheduleItem(
-                                start: i.timeIn,
-                                end: i.timeOut,
-                                className: classes[i.classId]?.name ?? '',
-                                subject: i.subject,
-                                weekday: i.weekday,
+                    children: (sortedSchedules.isEmpty)
+                        ? [
+                            Center(
+                              child: const Text(
+                                "Woohoo! You have no upcoming classes",
+                                style: TextStyle(fontStyle: FontStyle.italic),
                               ),
-                              Positioned.fill(
-                                child: Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding( 
-                                    padding: EdgeInsetsGeometry.all(16),
-                                    child: Icon(
-                                      Icons.edit,
-                                    )
-                                  )
-                                )
-                              ),
-                              Positioned.fill(
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      showScheduleEditPopup(context, i.id);
-                                    },
-                                    child: Ink(
-                                      color: Colors.transparent,
+                            ),
+                          ]
+                        : [
+                            for (Schedule i in sortedSchedules)
+                              if (i.weekday == selectedDay)
+                                Padding(
+                                  padding: EdgeInsetsGeometry.only(bottom: 8),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Stack(
+                                      fit: StackFit.loose,
+                                      children: [
+                                        ScheduleItem(
+                                          start: i.timeIn,
+                                          end: i.timeOut,
+                                          className:
+                                              classes[i.classId]?.name ?? '',
+                                          subject: i.subject,
+                                          weekday: i.weekday,
+                                        ),
+                                        Positioned.fill(
+                                          child: Align(
+                                            alignment: Alignment.bottomRight,
+                                            child: Padding(
+                                              padding: EdgeInsetsGeometry.all(
+                                                16,
+                                              ),
+                                              child: Icon(Icons.edit),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned.fill(
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: () {
+                                                showScheduleEditPopup(
+                                                  context,
+                                                  i.id,
+                                                );
+                                              },
+                                              child: Ink(
+                                                color: Colors.transparent,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              )
-                          
-                            ],
-                          ),
-                        ),
-                      )
-                    ],
+                          ],
                   ),
                 ),
                 Positioned(
                   bottom: 1,
                   right: 1,
                   child: FilledButton(
-                    onPressed: () { showScheduleAddPopup(context); }, 
+                    onPressed: () {
+                      showScheduleAddPopup(context);
+                    },
                     child: const Padding(
-                      padding: EdgeInsetsGeometry.symmetric(vertical: 16, horizontal: 32),
-                      child: Text("+ Add New")
-                    )
+                      padding: EdgeInsetsGeometry.symmetric(
+                        vertical: 16,
+                        horizontal: 32,
+                      ),
+                      child: Text("+ Add New"),
+                    ),
                   ),
-                )
+                ),
               ],
-            )
+            ),
           ),
         ],
-      )
+      ),
     );
 
     // Settings Page
@@ -1089,7 +1158,7 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
       child: Column(
         spacing: 16,
         children: [
-          Row (
+          Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             spacing: 32,
@@ -1103,23 +1172,34 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                     duration: Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
                     child: AspectRatio(
-                      aspectRatio: 2/3,
+                      aspectRatio: 2 / 3,
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
                           Container(
-                            color: Theme.of(context).colorScheme.surface
+                            color: Theme.of(context).colorScheme.surface,
                           ),
                           Positioned.fill(
                             child: Opacity(
-                              opacity: self.availability == Availability.available ? 1 : constants.opacityUnavailable,
+                              opacity:
+                                  self.availability == Availability.available
+                                  ? 1
+                                  : constants.opacityUnavailable,
                               child: Image(
-                                image: NetworkImage('${globals.baseURL}/api/profilePicture/${self.id}?a=$_imageCacheBuster'),
+                                image: NetworkImage(
+                                  '${globals.baseURL}/api/profilePicture/${self.id}?a=$_imageCacheBuster',
+                                ),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return Icon(Icons.broken_image, size: 64, color: Theme.of(context).colorScheme.onSurface);
+                                  return Icon(
+                                    Icons.broken_image,
+                                    size: 64,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  );
                                 },
-                              )
+                              ),
                             ),
                           ),
                           Container(
@@ -1130,42 +1210,55 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.center,
                                 colors: [
-                                  Theme.of(context).colorScheme.surfaceContainerHigh,
-                                  Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(0),
-                                ]
-                              )
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHigh,
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHigh
+                                      .withAlpha(0),
+                                ],
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  self.name, 
-                                  textScaler: TextScaler.linear(constants.phi), 
+                                  self.name,
+                                  textScaler: TextScaler.linear(constants.phi),
                                   style: TextStyle(
-                                    color: self.availability == Availability.available ? 
-                                    Theme.of(context).colorScheme.onSurface :
-                                    Theme.of(context).colorScheme.onSurface.withAlpha(128)
+                                    color:
+                                        self.availability ==
+                                            Availability.available
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withAlpha(128),
                                   ),
                                 ),
-                                Text(self.availability.label,
+                                Text(
+                                  self.availability.label,
                                   style: TextStyle(
-                                    color: self.availability == Availability.available ? 
-                                    Colors.green :
-                                    Colors.red,
-                                    fontWeight: FontWeight.bold
-                                  )
+                                    color:
+                                        self.availability ==
+                                            Availability.available
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
-                            )
+                            ),
                           ),
                           Align(
                             alignment: Alignment.bottomRight,
                             child: Padding(
                               padding: EdgeInsetsGeometry.all(8),
-                              child: Icon(
-                                Icons.edit,
-                              )
+                              child: Icon(Icons.edit),
                             ),
                           ),
                           Positioned.fill(
@@ -1173,28 +1266,29 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  _pickImage().then((f){
+                                  _pickImage().then((f) {
                                     if (f == null) return;
-                                    uploadProfilePicture(f, self.token!).then((_){
-                                      Future.delayed(Duration(milliseconds: 250)).then((_){
+                                    uploadProfilePicture(f, self.token!).then((
+                                      _,
+                                    ) {
+                                      Future.delayed(
+                                        Duration(milliseconds: 250),
+                                      ).then((_) {
                                         setState(() {
                                           _imageCacheBuster++;
                                         });
                                       });
                                     });
-
-                                  });                    
+                                  });
                                 },
-                                child: Ink(
-                                  color: Colors.transparent,
-                                ),
+                                child: Ink(color: Colors.transparent),
                               ),
                             ),
-                          )
+                          ),
                         ],
                       ),
-                    )
-                  )
+                    ),
+                  ),
                 ),
               ),
               Expanded(
@@ -1212,8 +1306,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                             decoration: const InputDecoration(
                               border: UnderlineInputBorder(),
                               labelText: 'Prefix',
-                            ), 
-                          )
+                            ),
+                          ),
                         ),
                         Expanded(
                           child: TextFormField(
@@ -1221,8 +1315,8 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                             decoration: const InputDecoration(
                               border: UnderlineInputBorder(),
                               labelText: 'Suffix',
-                            ), 
-                          )
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1231,16 +1325,16 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                       decoration: const InputDecoration(
                         border: UnderlineInputBorder(),
                         labelText: 'Full Name',
-                        icon: Icon(Icons.perm_identity)
-                      ), 
+                        icon: Icon(Icons.perm_identity),
+                      ),
                     ),
                     TextFormField(
                       controller: subjectTextController,
                       decoration: const InputDecoration(
                         border: UnderlineInputBorder(),
                         labelText: 'Subject',
-                        icon: Icon(Icons.subject)
-                      ), 
+                        icon: Icon(Icons.subject),
+                      ),
                     ),
                     // Row(
                     //   children: [
@@ -1257,31 +1351,31 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                     //   ],
                     // )
                   ],
-                )
+                ),
               ),
             ],
           ),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => showPasswordChangePopup(context), 
-              child: Padding( 
+              onPressed: () => showPasswordChangePopup(context),
+              child: Padding(
                 padding: EdgeInsets.all(16),
-                child: Text("Change Password")
-              )
-            )
+                child: Text("Change Password"),
+              ),
+            ),
           ),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: (){
+              onPressed: () {
                 updateProfile(
                   token: self.token ?? '',
-                  fullName: nameTextController.text, 
+                  fullName: nameTextController.text,
                   prefix: prefixTextController.text,
-                  suffix: postfixTextController.text, 
-                  mainSubject: subjectTextController.text
-                ).then((response){
+                  suffix: postfixTextController.text,
+                  mainSubject: subjectTextController.text,
+                ).then((response) {
                   if (response != null) {
                     setState(() {
                       self.name = nameTextController.text;
@@ -1291,15 +1385,15 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
                     });
                   }
                 });
-              }, 
-              child: Padding( 
+              },
+              child: Padding(
                 padding: EdgeInsets.all(16),
-                child: Text("Save Changes")
-              )
+                child: Text("Save Changes"),
+              ),
             ),
           ),
         ],
-      )
+      ),
     );
 
     // Main / Root
@@ -1324,44 +1418,39 @@ class _TNSRootPageState extends State<TNSRootPage> with TickerProviderStateMixin
         children: [
           PageView(
             controller: _pageViewController,
-            children: [
-              homePage,
-              schedPage,
-              profilePage
-            ],
+            children: [homePage, schedPage, profilePage],
           ),
 
           if (showLoading)
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withAlpha(128),
-              borderRadius: BorderRadius.circular(8)
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withAlpha(128),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          )
-        ]
+        ],
       ),
 
       bottomNavigationBar: StatefulBuilder(
         key: _bottomBarBuilderKey,
         builder: (ctx, innerSetState) {
-        return SalomonBottomBar(
-          margin: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+          return SalomonBottomBar(
+            margin: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
 
-          currentIndex: _selectedPageIndex,
-          onTap: (index) {
-            innerSetState(() {
-              _tabController.index = index;
-              _selectedPageIndex = index;
-              _updateCurrentPageIndex(index);
-            });
-          },
-          items: _destinations,
-        );
-      }),
+            currentIndex: _selectedPageIndex,
+            onTap: (index) {
+              innerSetState(() {
+                _tabController.index = index;
+                _selectedPageIndex = index;
+                _updateCurrentPageIndex(index);
+              });
+            },
+            items: _destinations,
+          );
+        },
+      ),
     );
   }
 }
@@ -1370,16 +1459,16 @@ final _destinations = [
   SalomonBottomBarItem(
     icon: const Icon(Icons.home_outlined),
     title: const Text("Home"),
-    selectedColor: Colors.purple
+    selectedColor: Colors.purple,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.edit_calendar_outlined),
     title: const Text("Schedule"),
-    selectedColor: Colors.orange
+    selectedColor: Colors.orange,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.settings),
     title: const Text("Settings"),
-    selectedColor: Colors.teal
+    selectedColor: Colors.teal,
   ),
 ];
