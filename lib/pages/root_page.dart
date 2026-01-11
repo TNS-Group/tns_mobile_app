@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:tns_mobile_app/availability.dart';
@@ -321,6 +322,8 @@ class _TNSRootPageState extends State<TNSRootPage>
     String? errorTimeInMessage;
     String? errorTimeOutMessage;
 
+    bool isBreak = false;
+
     Future<void> pickTime(bool isStart) async {
       final now = TimeOfDay.now();
       final picked = await showTimePicker(
@@ -444,6 +447,20 @@ class _TNSRootPageState extends State<TNSRootPage>
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("Break Time?"),
+                      Switch(value: isBreak, onChanged: (v){
+                        setState((){
+                          isBreak = v;
+                        });
+                      }),
+                    ],
+                  )
                 ],
               );
             },
@@ -488,7 +505,7 @@ class _TNSRootPageState extends State<TNSRootPage>
                   selectedDay ?? WeekDay.monday,
                   startTime ?? TimeOfDay.now(),
                   endTime ?? TimeOfDay.now(),
-                  false,
+                  isBreak,
                 );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
@@ -526,6 +543,8 @@ class _TNSRootPageState extends State<TNSRootPage>
     String? errorMessage;
     String? errorTimeInMessage;
     String? errorTimeOutMessage;
+
+    bool isBreak = true;
 
     Future<void> pickTime(bool isStart) async {
       final now = TimeOfDay.now();
@@ -651,6 +670,20 @@ class _TNSRootPageState extends State<TNSRootPage>
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("Break Time?"),
+                      Switch(value: isBreak, onChanged: (v){
+                        setState((){
+                          isBreak = v;
+                        });
+                      }),
+                    ],
+                  )
                 ],
               );
             },
@@ -683,7 +716,7 @@ class _TNSRootPageState extends State<TNSRootPage>
                   selectedDay ?? WeekDay.monday,
                   startTime ?? TimeOfDay.now(),
                   endTime ?? TimeOfDay.now(),
-                  false,
+                  isBreak,
                 );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
@@ -813,6 +846,28 @@ class _TNSRootPageState extends State<TNSRootPage>
           print("what the fuck");
         });
 
+    // FirebaseMessaging.onBackgroundMessage((RemoteMessage msg){
+    //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    //       AndroidNotificationDetails(
+    //     'your_channel_id',
+    //     'your_channel_name',
+    //     importance: Importance.max,
+    //     priority: Priority.high,
+    //     fullScreenIntent: true, // This is the key property
+    //   );
+    //   const NotificationDetails platformChannelSpecifics =
+    //         NotificationDetails(android: androidPlatformChannelSpecifics);
+    //
+    //   await FlutterLocalNotificationsPlugin.show(0, 'Title', 'Body', platformChannelSpecifics);
+    // });
+  
+//   const NotificationDetails platformChannelSpecifics =
+//       NotificationDetails(android: androidPlatformChannelSpecifics);
+//
+//   await flutterLocalNotificationsPlugin.show(
+//     0, 'Title', 'Body', platformChannelSpecifics);
+// }
+//     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage msg) {
       if (msg.data["event"] == "notify") {
         _showEventDialog(msg.data["tablet_session"]);
@@ -835,10 +890,8 @@ class _TNSRootPageState extends State<TNSRootPage>
   }
 
   void _handleReconnect() {
-    // Wait 3-5 seconds before trying again to avoid hammering the server
     Future.delayed(Duration(seconds: 3), () {
       if (mounted) {
-        // Ensure the widget is still in the tree
         print("Attempting to reconnect...");
         connectToStream();
       }
@@ -896,6 +949,8 @@ class _TNSRootPageState extends State<TNSRootPage>
   Widget build(BuildContext context) {
     final sortedSchedules = schedules.values.toList();
     sortedSchedules.sort((a, b) => a.timeIn.compareTo(b.timeIn));
+
+    
 
     // Home Page
     final quickSettings = Column(

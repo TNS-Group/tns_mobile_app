@@ -116,6 +116,23 @@ class _AuthWrapperState extends State<AuthWrapper> {
             return;
           }
 
+          FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+          NotificationSettings settings = await messaging.requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          );
+          
+          if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+            final fcmToken = await messaging.getToken();
+            api.sendDeviceToken(fcmToken!, teacher.token!);
+          }
+
           setState(() {
             currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
           });

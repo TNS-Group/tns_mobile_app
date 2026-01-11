@@ -242,6 +242,7 @@ Future<int?> editSchedule(Schedule schedule, String token) async {
       "weekday": schedule.weekday.code,
       "time_in": timeIn,
       "time_out": timeOut,
+      "is_break": schedule.isBreak
     },
   );
 

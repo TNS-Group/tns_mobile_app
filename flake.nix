@@ -18,13 +18,15 @@
         };
         androidEnv = pkgs.androidenv.override { licenseAccepted = true; };
         androidComposition = androidEnv.composeAndroidPackages {
-          cmdLineToolsVersion = "8.0"; # emulator related: newer versions are not only compatible with avdmanager
+          # cmdLineToolsVersion = "8.0"; # emulator related: newer versions are not only compatible with avdmanager
           platformToolsVersion = "35.0.1";
-          buildToolsVersions = [ "30.0.3" "33.0.2" "34.0.0" ];
-          platformVersions = [ "28" "31" "32" "33" "34" ];
-          abiVersions = [ "x86_64" ]; # emulator related: on an ARM machine, replace "x86_64" with
+          buildToolsVersions = [ "30.0.3" "33.0.2" "34.0.0" "35.0.0" ];
+          platformVersions = [ "34" "35" "36" ];
+          abiVersions = ["armeabi-v7a" "arm64-v8a" ]; # emulator related: on an ARM machine, replace "x86_64" with
           # either "armeabi-v7a" or "arm64-v8a", depending on the architecture of your workstation.
-          includeNDK = false;
+          includeCmake = true;
+          includeNDK = true;
+          ndkVersions = [ "27.0.12077973" ];
           includeSystemImages = enableEmulators; # emulator related: system images are needed for the emulator.
           systemImageTypes = [ "google_apis" "google_apis_playstore" ];
           includeEmulator = enableEmulators; # emulator related: if it should be enabled or not
@@ -45,7 +47,7 @@
         devShell = with pkgs; mkShell rec {
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
           ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
-          JAVA_HOME = jdk11.home;
+          JAVA_HOME = jdk17.home;
           FLUTTER_ROOT = flutter;
           DART_ROOT = "${flutter}/bin/cache/dart-sdk";
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
@@ -54,11 +56,11 @@
           # Maybe one day this will be supported.
           buildInputs = [
             androidSdk
-            flutter
+            fvm
             qemu_kvm
             gradle
-            jdk11
-            cmake
+            jdk17
+            # cmake
             ninja
             pkg-config
             clang
