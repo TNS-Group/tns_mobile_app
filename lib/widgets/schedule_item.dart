@@ -33,7 +33,7 @@ class ScheduleItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(subject.toUpperCase(), textScaler: const TextScaler.linear(0.8),),
-              Text(className, textScaler: const TextScaler.linear(phi),),
+              Text(isBreak ? "Break Time" : className, textScaler: const TextScaler.linear(phi),),
               Text("${weekday.label.toUpperCase().substring(0, 3)}  ${formatTimeOfDay(start)} - ${formatTimeOfDay(end)}"),
             ],
           )

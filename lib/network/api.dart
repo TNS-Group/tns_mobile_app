@@ -272,9 +272,13 @@ Future<List<Schedule>> getTeacherSchedules(int teacherId) async {
     return [];
   }
 
+  print(data);
+
   return data.map((item) {
     final dtIn = DateTime.parse("1970-01-01 ${item["time_in"]}");
     final dtOut = DateTime.parse("1970-01-01 ${item["time_out"]}");
+
+    print(item);
     
     return Schedule(
       item["id"] as int,
@@ -284,7 +288,7 @@ Future<List<Schedule>> getTeacherSchedules(int teacherId) async {
       WeekDay.fromCode(item["weekday"] as int),
       TimeOfDay.fromDateTime(dtIn),
       TimeOfDay.fromDateTime(dtOut),
-      item["is_break"] as bool
+      item["is_break"] as bool? ?? false
     );
   }).toList();
 }

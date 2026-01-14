@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:tns_mobile_app/availability.dart';
@@ -309,20 +309,30 @@ class _TNSRootPageState extends State<TNSRootPage>
     );
   }
 
-  void showScheduleEditPopup(BuildContext context, int index) {
-    WeekDay? selectedDay = schedules[index]?.weekday;
-    TextEditingController subjectInputController = TextEditingController();
-    SchoolClass? selectedClass = classes[schedules[index]?.classId];
-    TimeOfDay? startTime = schedules[index]?.timeIn;
-    TimeOfDay? endTime = schedules[index]?.timeOut;
-
-    subjectInputController.text = schedules[index]?.subject ?? '';
-
-    String? errorMessage;
-    String? errorTimeInMessage;
-    String? errorTimeOutMessage;
+  void showScheduleEditPopup(BuildContext context, int index, {bool add = false}) {
+    WeekDay? selectedDay;
+    TextEditingController subjectInputController;
+    SchoolClass? selectedClass;
+    TimeOfDay? startTime;
+    TimeOfDay? endTime;
 
     bool isBreak = false;
+
+    String? errorMessage, errorTimeInMessage, errorTimeOutMessage;
+
+    if (add) {
+      selectedDay = this.selectedDay;
+      subjectInputController = TextEditingController();
+    } else {
+      selectedDay = schedules[index]?.weekday;
+      subjectInputController = TextEditingController();
+      selectedClass = classes[schedules[index]?.classId];
+      startTime = schedules[index]?.timeIn;
+      endTime = schedules[index]?.timeOut;
+      isBreak = schedules[index]!.isBreak;
+    }
+
+    subjectInputController.text = schedules[index]?.subject ?? '';
 
     Future<void> pickTime(bool isStart) async {
       final now = TimeOfDay.now();
@@ -358,9 +368,10 @@ class _TNSRootPageState extends State<TNSRootPage>
           title: const Text("Edit Schedule"),
           content: StatefulBuilder(
             builder: (context, setState) {
-              return Column(
-                spacing: 8,
-                mainAxisSize: MainAxisSize.min,
+              return ListView(
+                shrinkWrap: true,
+                // spacing: 8,
+                // mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     decoration: InputDecoration(
@@ -389,6 +400,7 @@ class _TNSRootPageState extends State<TNSRootPage>
                   const SizedBox(height: 12),
 
                   // ---- CLASS DROPDOWN ----
+                  if (!isBreak)
                   DropdownButtonFormField<SchoolClass>(
                     decoration: InputDecoration(
                       labelText: "Class",
@@ -466,6 +478,7 @@ class _TNSRootPageState extends State<TNSRootPage>
             },
           ),
           actions: [
+            if (!add)
             TextButton(
               onPressed: () {
                 confirmationDeleteSchedule(context, index);
@@ -486,7 +499,7 @@ class _TNSRootPageState extends State<TNSRootPage>
               onPressed: () {
                 // VALIDATION → Show warning if something is missing
                 if (selectedDay == null ||
-                    selectedClass == null ||
+                    (selectedClass == null && !isBreak) ||
                     startTime == null ||
                     endTime == null) {
                   setState(() {}); // <-- not needed for AlertDialog, but safe
@@ -509,232 +522,40 @@ class _TNSRootPageState extends State<TNSRootPage>
                 );
 
                 final scfMsgr = ScaffoldMessenger.of(context);
-                editSchedule(sched, self.token ?? '').then((id) {
-                  if (id == null) {
-                    scfMsgr.clearSnackBars();
-                    scfMsgr.showSnackBar(
-                      SnackBar(content: Text('Error occured..')),
-                    );
-                    return;
-                  }
 
-                  sched.id = id;
+                if (add) {
+                  createSchedule(sched, self.token ?? '').then((id) {
+                    if (id == null) {
+                      scfMsgr.clearSnackBars();
+                      scfMsgr.showSnackBar(
+                        SnackBar(content: Text('Error occured..')),
+                      );
+                      return;
+                    }
 
-                  setState(() {
-                    schedules[id] = sched;
+                    sched.id = id;
+
+                    setState(() {
+                      schedules[id] = sched;
+                    });
                   });
-                });
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+                } else {
+                  editSchedule(sched, self.token ?? '').then((id) {
+                    if (id == null) {
+                      scfMsgr.clearSnackBars();
+                      scfMsgr.showSnackBar(
+                        SnackBar(content: Text('Error occured..')),
+                      );
+                      return;
+                    }
 
-  void showScheduleAddPopup(BuildContext context) {
-    WeekDay? selectedDay = this.selectedDay;
-    TextEditingController subjectInputController = TextEditingController();
-    SchoolClass? selectedClass;
-    TimeOfDay? startTime;
-    TimeOfDay? endTime;
+                    sched.id = id;
 
-    String? errorMessage;
-    String? errorTimeInMessage;
-    String? errorTimeOutMessage;
-
-    bool isBreak = true;
-
-    Future<void> pickTime(bool isStart) async {
-      final now = TimeOfDay.now();
-      final picked = await showTimePicker(
-        context: context,
-        initialTime: (isStart ? startTime : endTime) ?? now,
-      );
-
-      if (picked != null) {
-        if (isStart) {
-          startTime = picked;
-          if (endTime != null && picked.isAfter(endTime!)) {
-            startTime = null;
-            errorTimeInMessage = "Invalid Time";
-          }
-        } else {
-          endTime = picked;
-          if (startTime != null && startTime!.isAfter(picked)) {
-            endTime = null;
-            errorTimeOutMessage = "Invalid Time";
-          }
-        }
-      } else {}
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text("Add Schedule"),
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              return Column(
-                spacing: 8,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Subject",
-                      errorText: errorMessage,
-                    ),
-                    controller: subjectInputController,
-                  ),
-
-                  // ---- DAY DROPDOWN ----
-                  DropdownButtonFormField<WeekDay>(
-                    decoration: InputDecoration(
-                      labelText: "Day",
-                      errorText: errorMessage,
-                    ),
-                    initialValue: selectedDay,
-                    items: WeekDay.values
-                        .map(
-                          (d) =>
-                              DropdownMenuItem(value: d, child: Text(d.label)),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => selectedDay = v),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ---- CLASS DROPDOWN ----
-                  DropdownButtonFormField<SchoolClass>(
-                    decoration: InputDecoration(
-                      labelText: "Class",
-                      errorText: errorMessage,
-                    ),
-                    initialValue: selectedClass,
-                    items: classes.values
-                        .map(
-                          (c) =>
-                              DropdownMenuItem(value: c, child: Text(c.name)),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => selectedClass = v),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ---- START TIME ----
-                  InkWell(
-                    onTap: () async {
-                      errorTimeInMessage = null;
-                      await pickTime(true);
-                      setState(() {});
-                    },
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: "Start Time",
-                        border: OutlineInputBorder(),
-                        errorText: errorTimeInMessage,
-                      ),
-                      child: Text(
-                        startTime != null
-                            ? startTime!.format(context)
-                            : "Select time",
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ---- END TIME ----
-                  InkWell(
-                    onTap: () async {
-                      await pickTime(false);
-                      setState(() {});
-                    },
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: "End Time",
-                        border: OutlineInputBorder(),
-                        errorText: errorTimeOutMessage,
-                      ),
-                      child: Text(
-                        endTime != null
-                            ? endTime!.format(context)
-                            : "Select time",
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text("Break Time?"),
-                      Switch(value: isBreak, onChanged: (v){
-                        setState((){
-                          isBreak = v;
-                        });
-                      }),
-                    ],
-                  )
-                ],
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            FilledButton(
-              onPressed: () {
-                // VALIDATION → Show warning if something is missing
-                errorMessage = null;
-                if (selectedDay == null ||
-                    selectedClass == null ||
-                    startTime == null ||
-                    endTime == null) {
-                  setState(() {});
-                  errorMessage = "Please fill in all fields";
-                  (context as Element).markNeedsBuild();
-                  return;
+                    setState(() {
+                      schedules[id] = sched;
+                    });
+                  });
                 }
-                Navigator.pop(context);
-
-                Schedule sched = Schedule(
-                  0,
-                  selectedClass?.id ?? 0,
-                  self.id,
-                  subjectInputController.text,
-                  selectedDay ?? WeekDay.monday,
-                  startTime ?? TimeOfDay.now(),
-                  endTime ?? TimeOfDay.now(),
-                  isBreak,
-                );
-
-                final scfMsgr = ScaffoldMessenger.of(context);
-                createSchedule(sched, self.token ?? '').then((id) {
-                  if (id == null) {
-                    scfMsgr.clearSnackBars();
-                    scfMsgr.showSnackBar(
-                      SnackBar(content: Text('Error occured..')),
-                    );
-                    return;
-                  }
-
-                  sched.id = id;
-
-                  setState(() {
-                    schedules[id] = sched;
-                  });
-                });
               },
               child: const Text("Save"),
             ),
@@ -743,6 +564,202 @@ class _TNSRootPageState extends State<TNSRootPage>
       },
     );
   }
+
+  // void showScheduleAddPopup(BuildContext context) {
+  //   WeekDay? selectedDay = this.selectedDay;
+  //   TextEditingController subjectInputController = TextEditingController();
+  //   SchoolClass? selectedClass;
+  //   TimeOfDay? startTime;
+  //   TimeOfDay? endTime;
+
+  //   String? errorMessage;
+  //   String? errorTimeInMessage;
+  //   String? errorTimeOutMessage;
+
+  //   bool isBreak = false;
+
+  //   Future<void> pickTime(bool isStart) async {
+  //     final now = TimeOfDay.now();
+  //     final picked = await showTimePicker(
+  //       context: context,
+  //       initialTime: (isStart ? startTime : endTime) ?? now,
+  //     );
+
+  //     if (picked != null) {
+  //       if (isStart) {
+  //         startTime = picked;
+  //         if (endTime != null && picked.isAfter(endTime!)) {
+  //           startTime = null;
+  //           errorTimeInMessage = "Invalid Time";
+  //         }
+  //       } else {
+  //         endTime = picked;
+  //         if (startTime != null && startTime!.isAfter(picked)) {
+  //           endTime = null;
+  //           errorTimeOutMessage = "Invalid Time";
+  //         }
+  //       }
+  //     } else {}
+  //   }
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(16),
+  //         ),
+  //         title: const Text("Add Schedule"),
+  //         content: StatefulBuilder(
+  //           builder: (context, setState) {
+  //             return ListView(
+  //               shrinkWrap: true,
+  //               // mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 TextField(
+  //                   decoration: InputDecoration(
+  //                     labelText: "Subject",
+  //                     errorText: errorMessage,
+  //                   ),
+  //                   controller: subjectInputController,
+  //                 ),
+
+  //                 // ---- DAY DROPDOWN ----
+  //                 DropdownButtonFormField<WeekDay>(
+  //                   decoration: InputDecoration(
+  //                     labelText: "Day",
+  //                     errorText: errorMessage,
+  //                   ),
+  //                   initialValue: selectedDay,
+  //                   items: WeekDay.values
+  //                       .map(
+  //                         (d) =>
+  //                             DropdownMenuItem(value: d, child: Text(d.label)),
+  //                       )
+  //                       .toList(),
+  //                   onChanged: (v) => setState(() => selectedDay = v),
+  //                 ),
+
+  //                 const SizedBox(height: 12),
+
+  //                 // ---- CLASS DROPDOWN ----
+  //                 if (!isBreak)
+  //                 DropdownButtonFormField<SchoolClass>(
+  //                   decoration: InputDecoration(
+  //                     labelText: "Class",
+  //                     errorText: errorMessage,
+  //                   ),
+  //                   initialValue: selectedClass,
+  //                   items: classes.values
+  //                       .map(
+  //                         (c) =>
+  //                             DropdownMenuItem(value: c, child: Text(c.name)),
+  //                       )
+  //                       .toList(),
+  //                   onChanged: (v) => setState(() => selectedClass = v),
+  //                 ),
+
+  //                 const SizedBox(height: 12),
+
+  //                 // ---- START TIME ----
+  //                 InkWell(
+  //                   onTap: () async {
+  //                     errorTimeInMessage = null;
+  //                     await pickTime(true);
+  //                     setState(() {});
+  //                   },
+  //                   child: InputDecorator(
+  //                     decoration: InputDecoration(
+  //                       labelText: "Start Time",
+  //                       border: OutlineInputBorder(),
+  //                       errorText: errorTimeInMessage,
+  //                     ),
+  //                     child: Text(
+  //                       startTime != null
+  //                           ? startTime!.format(context)
+  //                           : "Select time",
+  //                     ),
+  //                   ),
+  //                 ),
+
+  //                 const SizedBox(height: 12),
+
+  //                 // ---- END TIME ----
+  //                 InkWell(
+  //                   onTap: () async {
+  //                     await pickTime(false);
+  //                     setState(() {});
+  //                   },
+  //                   child: InputDecorator(
+  //                     decoration: InputDecoration(
+  //                       labelText: "End Time",
+  //                       border: OutlineInputBorder(),
+  //                       errorText: errorTimeOutMessage,
+  //                     ),
+  //                     child: Text(
+  //                       endTime != null
+  //                           ? endTime!.format(context)
+  //                           : "Select time",
+  //                     ),
+  //                   ),
+  //                 ),
+
+  //                 const SizedBox(height: 12),
+
+  //                 Row(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     const Text("Break Time?"),
+  //                     Switch(value: isBreak, onChanged: (v){
+  //                       setState((){
+  //                         isBreak = v;
+  //                       });
+  //                     }),
+  //                   ],
+  //                 )
+  //               ],
+  //             );
+  //           },
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text("Cancel"),
+  //           ),
+  //           FilledButton(
+  //             onPressed: () {
+  //               // VALIDATION → Show warning if something is missing
+  //               errorMessage = null;
+  //               if (selectedDay == null ||
+  //                   startTime == null ||
+  //                   endTime == null) {
+  //                 setState(() {});
+  //                 errorMessage = "Please fill in all fields";
+  //                 (context as Element).markNeedsBuild();
+  //                 return;
+  //               }
+  //               Navigator.pop(context);
+
+  //               Schedule sched = Schedule(
+  //                 0,
+  //                 selectedClass?.id ?? 0,
+  //                 self.id,
+  //                 subjectInputController.text,
+  //                 selectedDay ?? WeekDay.monday,
+  //                 startTime ?? TimeOfDay.now(),
+  //                 endTime ?? TimeOfDay.now(),
+  //                 isBreak,
+  //               );
+
+  //               final scfMsgr = ScaffoldMessenger.of(context);
+  //             },
+  //             child: const Text("Save"),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   Future<void> loadState() async {
     final clss = await getClassesList();
@@ -753,6 +770,8 @@ class _TNSRootPageState extends State<TNSRootPage>
       schedules.addAll({for (final s in schds) s.id: s});
       showLoading = false;
     });
+
+    print(schedules);
   }
 
   void _showEventDialog(String tabletSession) {
@@ -846,47 +865,12 @@ class _TNSRootPageState extends State<TNSRootPage>
           print("what the fuck");
         });
 
-    // FirebaseMessaging.onBackgroundMessage((RemoteMessage msg){
-    //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    //       AndroidNotificationDetails(
-    //     'your_channel_id',
-    //     'your_channel_name',
-    //     importance: Importance.max,
-    //     priority: Priority.high,
-    //     fullScreenIntent: true, // This is the key property
-    //   );
-    //   const NotificationDetails platformChannelSpecifics =
-    //         NotificationDetails(android: androidPlatformChannelSpecifics);
-    //
-    //   await FlutterLocalNotificationsPlugin.show(0, 'Title', 'Body', platformChannelSpecifics);
-    // });
-  
-//   const NotificationDetails platformChannelSpecifics =
-//       NotificationDetails(android: androidPlatformChannelSpecifics);
-//
-//   await flutterLocalNotificationsPlugin.show(
-//     0, 'Title', 'Body', platformChannelSpecifics);
-// }
-//     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage msg) {
       if (msg.data["event"] == "notify") {
         _showEventDialog(msg.data["tablet_session"]);
         print("nigga");
       }
     });
-
-    // getTeacherPrefs(self.token!).then((d){
-    //   _dndVacant = d!["dnd_vacant"];
-    // });
-    // SharedPreferences.getInstance().then((v){
-    //   prefs = v;
-    //
-    //   if (!prefs.containsKey("dndVacant")) {
-    //     prefs.setBool("dndVacant", true);
-    //   } else {
-    //     _dndVacant = prefs.getBool("dndVacant")!;
-    //   }
-
   }
 
   void _handleReconnect() {
@@ -897,7 +881,7 @@ class _TNSRootPageState extends State<TNSRootPage>
       }
     });
 
-    showLoading = false;
+    // showLoading = false;
   }
 
   void connectToStream() {
@@ -917,12 +901,10 @@ class _TNSRootPageState extends State<TNSRootPage>
       },
       onError: (error) {
         print("Stream Error: $error");
-        showLoading = true;
         _handleReconnect();
       },
       onDone: () {
         print("Stream closed by server.");
-        showLoading = true;
         _handleReconnect();
       },
       cancelOnError: true,
@@ -1149,6 +1131,7 @@ class _TNSRootPageState extends State<TNSRootPage>
                                               classes[i.classId]?.name ?? '',
                                           subject: i.subject,
                                           weekday: i.weekday,
+                                          isBreak: i.isBreak,
                                         ),
                                         Positioned.fill(
                                           child: Align(
@@ -1189,7 +1172,7 @@ class _TNSRootPageState extends State<TNSRootPage>
                   right: 1,
                   child: FilledButton(
                     onPressed: () {
-                      showScheduleAddPopup(context);
+                      showScheduleEditPopup(context, 0, add: true);
                     },
                     child: const Padding(
                       padding: EdgeInsetsGeometry.symmetric(

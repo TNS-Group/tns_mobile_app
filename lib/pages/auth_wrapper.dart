@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tns_mobile_app/network/api.dart' as api;
@@ -20,9 +19,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
   late GlobalKey<TNSLoginPageState> loginPageKey;
   late SharedPreferences prefs;
 
-  String? tabletToken;
-
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
 
     loginPageKey = GlobalKey<TNSLoginPageState>();
@@ -33,111 +31,93 @@ class _AuthWrapperState extends State<AuthWrapper> {
           loginPageKey.currentState?.loading = true;
         });
 
-        String? fcmToken;
+        // 1. Perform Login
+        final teacher = await api.login(email, password);
 
-        if (Platform.isAndroid || Platform.isIOS) {
-          FirebaseMessaging messaging = FirebaseMessaging.instance;
+        if (teacher == null) {
+          loginPageKey.currentState?.setState(() {
+            loginPageKey.currentState?.loading = false;
+            loginPageKey.currentState?.hasError = true;
+          });
+          return;
+        }
 
-          NotificationSettings settings = await messaging.requestPermission(
-            alert: true,
-            announcement: false,
-            badge: true,
-            carPlay: false,
-            criticalAlert: false,
-            provisional: false,
-            sound: true,
-          );
-          if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-            fcmToken = await messaging.getToken();
+        // 2. Persist Session
+        await prefs.setString("token", teacher.token ?? '');
 
-            api.login(email, password).then((teacher) {
-              if (teacher == null) {
-                  loginPageKey.currentState?.setState(() {
-                    loginPageKey.currentState?.loading = false;
-                    loginPageKey.currentState?.hasError = true;
-                  });
-                } else {
-                  prefs.setString("token", teacher.token ?? '');
-                  setState(() {
-                    currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
-                  });
+        // 3. Handle Notifications (Web & Mobile compatible)
+        FirebaseMessaging messaging = FirebaseMessaging.instance;
+        NotificationSettings settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
 
-                  loginPageKey.currentState?.setState(() {
-                    loginPageKey.currentState?.loading = false;
-                  });
-
-                  api.sendDeviceToken(fcmToken!, teacher.token!);
-                }
-            });
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          try {
+            // Web requires a vapidKey from Firebase Console
+            String? fcmToken = await messaging.getToken(
+              vapidKey: kIsWeb ? "YOUR_PUBLIC_VAPID_KEY_HERE" : null,
+            );
+            if (fcmToken != null && teacher.token != null) {
+              await api.sendDeviceToken(fcmToken, teacher.token!);
+            }
+          } catch (e) {
+            debugPrint("FCM Token acquisition failed: $e");
           }
         }
 
-        api.login(email, password).then((teacher) {
-          if (teacher == null) {
-              loginPageKey.currentState?.setState(() {
-                loginPageKey.currentState?.loading = false;
-                loginPageKey.currentState?.hasError = true;
-              });
-            } else {
-              prefs.setString("token", teacher.token ?? '');
-              setState(() {
-                currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
-              });
+        // 4. Navigate to Root
+        setState(() {
+          currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
+        });
 
-              loginPageKey.currentState?.setState(() {
-                loginPageKey.currentState?.loading = false;
-              });
-            }
+        loginPageKey.currentState?.setState(() {
+          loginPageKey.currentState?.loading = false;
         });
       },
     );
 
-    currentPage = Scaffold(key: UniqueKey(),
-      body: Center(
-        child: CircularProgressIndicator()
-      ),
+    // Initial Loading State
+    currentPage = const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
 
-    SharedPreferences.getInstance().then((v) {
-      prefs = v;
+    _prepareSession();
+  }
 
-      if (!prefs.containsKey("token")) {
-        setState(() {
-          currentPage = loginPage;
-        });
-      } else {
-        api.getTeacherSelf(prefs.getString("token") ?? '').then((teacher) async {
-          if (teacher == null) {
-            setState(() {
-              currentPage = loginPage;
-            });
+  Future<void> _prepareSession() async {
+    prefs = await SharedPreferences.getInstance();
 
-            await prefs.remove('token');
-            return;
-          }
+    if (!prefs.containsKey("token")) {
+      setState(() => currentPage = loginPage);
+      return;
+    }
 
-          FirebaseMessaging messaging = FirebaseMessaging.instance;
+    final token = prefs.getString("token") ?? '';
+    final teacher = await api.getTeacherSelf(token);
 
-          NotificationSettings settings = await messaging.requestPermission(
-            alert: true,
-            announcement: false,
-            badge: true,
-            carPlay: false,
-            criticalAlert: false,
-            provisional: false,
-            sound: true,
-          );
-          
-          if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-            final fcmToken = await messaging.getToken();
-            api.sendDeviceToken(fcmToken!, teacher.token!);
-          }
+    if (teacher == null) {
+      await prefs.remove('token');
+      setState(() => currentPage = loginPage);
+      return;
+    }
 
-          setState(() {
-            currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
-          });
-        });
+    // Refresh FCM token on background resume/auto-login
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.getNotificationSettings();
+    
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      String? fcmToken = await messaging.getToken(
+        vapidKey: kIsWeb ? "YOUR_PUBLIC_VAPID_KEY_HERE" : null,
+      );
+      if (fcmToken != null) {
+        api.sendDeviceToken(fcmToken, teacher.token!);
       }
+    }
+
+    setState(() {
+      currentPage = TNSRootPage(initialTeacher: teacher, key: UniqueKey());
     });
   }
 
@@ -148,9 +128,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
       transitionBuilder: (child, animation) {
         return SlideTransition(
           position: Tween<Offset>(
-          begin: const Offset(1.0, 0),
-          end: Offset.zero,
-        ).animate(animation),
+            begin: const Offset(1.0, 0),
+            end: Offset.zero,
+          ).animate(animation),
           child: child,
         );
       },
