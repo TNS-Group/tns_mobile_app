@@ -57,7 +57,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           try {
             // Web requires a vapidKey from Firebase Console
             String? fcmToken = await messaging.getToken(
-              vapidKey: kIsWeb ? "YOUR_PUBLIC_VAPID_KEY_HERE" : null,
+              vapidKey: kIsWeb ? "BFfleu3p3F69RRAfkGUx7fx0s8ASUDHvOeaqo_wH7MSN_DzCpMWE2tmR0uxMTOah_Zqd7M0AKV24bMkdhaGHYKM" : null,
             );
             if (fcmToken != null && teacher.token != null) {
               await api.sendDeviceToken(fcmToken, teacher.token!);
@@ -109,7 +109,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       String? fcmToken = await messaging.getToken(
-        vapidKey: kIsWeb ? "YOUR_PUBLIC_VAPID_KEY_HERE" : null,
+        vapidKey: kIsWeb ? "BFfleu3p3F69RRAfkGUx7fx0s8ASUDHvOeaqo_wH7MSN_DzCpMWE2tmR0uxMTOah_Zqd7M0AKV24bMkdhaGHYKM" : null,
       );
       if (fcmToken != null) {
         api.sendDeviceToken(fcmToken, teacher.token!);

@@ -90,17 +90,20 @@ Future<dynamic> postParse(String path, {Map<String, dynamic>? params, Map<String
   try {
     late final Uri url;
     if (globals.baseURL.startsWith('https://')) {
-      url = Uri.http(globals.baseURL.replaceFirst('https://', ''), path, params);
+      url = Uri.https(globals.baseURL.replaceFirst('https://', ''), path, params);
 
     } else if (globals.baseURL.startsWith('http://')) {
       url = Uri.http(globals.baseURL.replaceFirst('http://', ''), path, params);
     }
 
-    final response = await http.post(
-      url,
-      headers: headers,
-      body: data != null ? json.encode(data) : null,
-    );
+    final request = http.Request('POST', url)
+      ..headers.addAll(headers);
+
+    if (data != null) {
+      request.body = json.encode(data);
+    }
+
+    final response = await http.Response.fromStream(await http.Client().send(request));
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -123,7 +126,7 @@ Future<dynamic> optionsParse(String path, {Map<String, dynamic>? data, required 
   try {
     late final Uri url;
     if (globals.baseURL.startsWith('https://')) {
-      url = Uri.http(globals.baseURL.replaceFirst('https://', ''), path);
+      url = Uri.https(globals.baseURL.replaceFirst('https://', ''), path);
 
     } else if (globals.baseURL.startsWith('http://')) {
       url = Uri.http(globals.baseURL.replaceFirst('http://', ''), path);
@@ -160,7 +163,7 @@ Future<dynamic> deleteReq(String path, {Map<String, dynamic>? param, required St
   try {
     late final Uri url;
     if (globals.baseURL.startsWith('https://')) {
-      url = Uri.http(globals.baseURL.replaceFirst('https://', ''), path, param);
+      url = Uri.https(globals.baseURL.replaceFirst('https://', ''), path, param);
 
     } else if (globals.baseURL.startsWith('http://')) {
       url = Uri.http(globals.baseURL.replaceFirst('http://', ''), path, param);
@@ -503,7 +506,7 @@ Future<int> uploadProfilePicture(XFile file, String token) async {
   try {
     late final Uri uri;
     if (globals.baseURL.startsWith('https://')) {
-      uri = Uri.http(globals.baseURL.replaceFirst('https://', ''), path);
+      uri = Uri.https(globals.baseURL.replaceFirst('https://', ''), path);
 
     } else if (globals.baseURL.startsWith('http://')) {
       uri = Uri.http(globals.baseURL.replaceFirst('http://', ''), path);
